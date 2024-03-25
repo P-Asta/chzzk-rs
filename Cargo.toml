@@ -1,0 +1,8 @@
+[package]
+name = "chzzk-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chzzk =  {path = "./chzzk"}
+tokio = { version = "1.36.0", features = ["rt-multi-thread", "macros"] }
