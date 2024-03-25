@@ -1,8 +1,9 @@
+mod channel;
 mod search;
 mod search_channel;
 mod search_live;
 mod search_video;
-
+use channel::Channel;
 pub use search_channel::SearchChannelJson;
 pub use search_live::SearchLiveJson;
 pub use search_video::SearchVideoJson;
@@ -70,7 +71,24 @@ impl Client {
             search.offset,
             search.size
         );
-        println!("{}", url);
+        let res = self.client.get(url).send().await;
+
+        if res.is_ok() {
+            let res =
+                serde_json::from_str(&res.unwrap().text().await.unwrap().replace("null", "\"\""));
+            if res.is_ok() {
+                return Ok(res.unwrap());
+            }
+            return Err("json parsing failed".to_string());
+        }
+        Err(format!("{:?}", res.err()))
+    }
+
+    pub async fn channel(&self, channel_id: &str) -> Result<Channel, String> {
+        let url = format!(
+            "https://api.chzzk.naver.com/service/v1/channels/{}",
+            channel_id
+        );
         let res = self.client.get(url).send().await;
 
         if res.is_ok() {
