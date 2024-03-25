@@ -1,10 +1,10 @@
-use chzzk::{Search, SearchChannelJson, SearchLiveJson, SearchVideoJson};
+use chzzk::{Search, SearchChannelJson};
 #[tokio::main]
 async fn main() {
     let client = chzzk::Client::new();
     let res = client
-        .search::<SearchLiveJson>(Search {
-            search_type: chzzk::SearchType::Live,
+        .search::<SearchChannelJson>(Search {
+            search_type: chzzk::SearchType::Channel,
             keyword: "공포".to_string(),
             ..Default::default()
         })

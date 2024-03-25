@@ -1,4 +1,5 @@
 mod channel;
+mod chat;
 mod search;
 mod search_channel;
 mod search_live;

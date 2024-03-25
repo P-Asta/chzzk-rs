@@ -1,4 +1,4 @@
-use chzzk::{Search, SearchChannelJson, SearchLiveJson, SearchVideoJson};
+use chzzk::{Search, SearchLiveJson};
 #[tokio::main]
 async fn main() {
     let client = chzzk::Client::new();
