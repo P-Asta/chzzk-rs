@@ -10,7 +10,7 @@ cargo r --example get_channels
 
 
 ## todo
-- <input type="checkbox" disabled checked /> exmaple code
-- <input type="checkbox" disabled checked /> search info
-- <input type="checkbox" disabled checked /> channel info
-- <input type="checkbox" disabled /> chat info
+- [x] exmaple code
+- [x] search info
+- [x] channel info
+- [ ] chat info
