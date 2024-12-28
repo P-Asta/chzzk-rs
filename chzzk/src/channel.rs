@@ -1,27 +1,38 @@
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub struct Channel {
+pub struct ChannelResponse {
     pub code: usize,
     pub message: String,
-    pub content: Content,
+    pub content: Channel,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-#[allow(non_snake_case)]
-pub struct Content {
-    pub channelId: String,
-    pub channelName: String,
-    pub channelImageUrl: String,
-    pub verifiedMark: bool,
-    pub channelType: String,
-    pub channelDescription: String,
-    pub followerCount: usize,
-    pub openLive: bool,
-    pub subscriptionAvailability: bool,
-    pub subscriptionPaymentAvailability: SubscriptionPaymentAvailability,
+pub struct Channel {
+    #[serde(rename = "channelId")]
+    pub channel_id: String,
+    #[serde(rename = "channelName")]
+    pub channel_name: String,
+    #[serde(rename = "channelImageUrl")]
+    pub channel_image_url: String,
+    #[serde(rename = "verifiedMark")]
+    pub verified_mark: bool,
+    #[serde(rename = "channelType")]
+    pub channel_type: String,
+    #[serde(rename = "channelDescription")]
+    pub channel_description: String,
+    #[serde(rename = "followerCount")]
+    pub follower_count: usize,
+    #[serde(rename = "openLive")]
+    pub open_live: bool,
+    #[serde(rename = "subscriptionAvailability")]
+    pub subscription_availability: bool,
+    #[serde(rename = "subscriptionPaymentAvailability")]
+    pub subscription_payment_availability: SubscriptionPaymentAvailability,
 }
+
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-#[allow(non_snake_case)]
 pub struct SubscriptionPaymentAvailability {
-    pub iapAvailability: bool,
-    pub iabAvailability: bool,
+    #[serde(rename = "iapAvailability")]
+    pub iap_availability: bool,
+    #[serde(rename = "iabAvailability")]
+    pub iab_availability: bool,
 }

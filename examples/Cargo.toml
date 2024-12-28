@@ -6,5 +6,9 @@ edition = "2021"
 license = "MIT"
 
 [[example]]
-name = "x"
-path = "x.rs"
+name = "get_channel_info"
+path = "get_channel_info.rs"
+
+[dependencies]
+chzzk = { path = "../chzzk" }
+tokio = { version = "1.42.0" }
