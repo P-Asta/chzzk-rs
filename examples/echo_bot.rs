@@ -1,12 +1,11 @@
 use std::time::Duration;
 use chzzk::{chat::ChatClient, ChzzkClient};
-
-pub const AUT: &str = "omitted";
-pub const SES: &str = "omitted";
+mod auth;
 
 #[tokio::main]
 async fn main() {
-    let client = ChzzkClient::new_with_sign_in(AUT, SES);
+    let auth = auth::get_aut_ses_from_env();
+    let client = ChzzkClient::new_with_sign_in(auth.0.as_str(), auth.1.as_str());
     let mut chat = ChatClient::new(client, "1dac6492f81d89e261f692bb6b79ff57");
     chat.connect().await.unwrap();
     let cc = chat.clone();
