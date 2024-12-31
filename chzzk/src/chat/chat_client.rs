@@ -8,7 +8,7 @@ use futures::{
     stream::{SplitSink, SplitStream, StreamExt},
     SinkExt,
 };
-use json::JsonValue;
+use json::{object, JsonValue};
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
@@ -102,6 +102,7 @@ impl ChatClient {
         // Run handler
         tokio::spawn(ChatClient::response_handler(read, self.clone()));
         tokio::spawn(ChatClient::poll(self.clone()));
+        tokio::spawn(ChatClient::ping(self.clone()));
 
         // Prepare first message
         let payload = Message::from(
@@ -244,7 +245,7 @@ impl ChatClient {
 
         match cmd {
             ChatCommand::Ping => todo!(),
-            ChatCommand::Pong => todo!(),
+            ChatCommand::Pong => {},
             ChatCommand::Connect => todo!(),
             ChatCommand::Connected => {
                 let body = jsonvalue_unwrap_or_return!(JsonValue::Object, body)
@@ -293,6 +294,8 @@ impl ChatClient {
 
     async fn poll(chat: ChatClient) {
         while chat.write_stream.lock().await.is_some() {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+
             match ChatClient::do_poll(&chat.client, chat.channel_id.as_str()).await {
                 Ok(chat_id) => *chat.chat_id.lock().await = Some(chat_id.clone()),
                 Err(err) => {
@@ -301,8 +304,6 @@ impl ChatClient {
                     break;
                 }
             }
-
-            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     }
 
@@ -312,6 +313,18 @@ impl ChatClient {
             .map_err(chain_error!("poll: live_channel_status error"))?
             .open_or("poll: not livestreaming")?
             .chat_channel_id)
+    }
+
+    async fn ping(chat: ChatClient) {
+        let ping_object = Message::from(json::object! {
+            cmd: ChatCommand::Ping as i32,
+            ver: "2"
+        }.to_string());
+
+        while chat.write_stream.lock().await.is_some() {
+            tokio::time::sleep(Duration::from_secs(20)).await;
+            chat.send_message(ping_object.clone()).await.unwrap();
+        }
     }
 
     pub async fn register_on_chat<F, Fut>(&self, f: F)
