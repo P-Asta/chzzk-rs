@@ -68,8 +68,10 @@ impl ChzzkClient {
 
         let json = serde_json::from_str::<T>(&text)
             // let json = json::parse(text.as_str())
-            .map_err(chain_error!(
-                format!("do_request: response is not a json. {}", text)))?;
+            .map_err(chain_error!(format!(
+                "do_request: response is not a json. {}",
+                text
+            )))?;
 
         Ok(json)
     }

@@ -10,11 +10,9 @@ async fn main() {
     let mut chat = ChatClient::new(client, "1dac6492f81d89e261f692bb6b79ff57");
     chat.connect().await.unwrap();
     let cc = chat.clone();
-    chat.register_on_chat(|x| {
+    chat.register_on_chat(|x| async move {
         println!("{}", x.message);
-        async move {
-            cc.send_chat(x.message.as_str()).await.unwrap();
-        }
+        cc.send_chat(x.message.as_str()).await.unwrap();
     })
     .await;
     tokio::time::sleep(Duration::from_secs(120)).await;

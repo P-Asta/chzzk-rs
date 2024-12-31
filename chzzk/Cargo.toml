@@ -8,7 +8,6 @@ description = "Unofficial SDK of Korean live platform chzzk"
 
 [dependencies]
 futures = "0.3.31"
-json = "0.12.4"
 rand = "0.8.5"
 reqwest = "0.12.9"
 tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }

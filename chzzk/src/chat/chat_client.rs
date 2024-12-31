@@ -1,14 +1,13 @@
+use futures::{
+    stream::{SplitSink, SplitStream, StreamExt},
+    SinkExt,
+};
+use serde_json::Value;
 use std::{
     future::Future,
     sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-
-use futures::{
-    stream::{SplitSink, SplitStream, StreamExt},
-    SinkExt,
-};
-use json::{object, JsonValue};
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
@@ -16,8 +15,8 @@ use crate::user::UserIdHash;
 
 use super::{
     super::{
-        error::{chain_error, Error},
         client::ChzzkClient,
+        error::{chain_error, Error},
         r#macro::{jsonvalue_unwrap_or_return, simple_get, simple_get_as},
     },
     chat_handle::*,
@@ -106,19 +105,19 @@ impl ChatClient {
 
         // Prepare first message
         let payload = Message::from(
-            json::object! {
-                bdy: json::object! {
-                    accTkn: chat_status.access_token,
-                    auth: "SEND",
-                    devType: 2001,
-                    uid: user.user_id_hash.0,
-                },
-                cmd: ChatCommand::Connect as i32,
-                tid: 1,
-                cid: chat_id.as_str(),
-                svcid: "game",
-                ver: "3",
-            }
+            serde_json::json!({
+                "bdy": serde_json::json!({
+                    "accTkn": chat_status.access_token,
+                    "auth": "SEND",
+                    "devType": 2001,
+                    "uid": user.user_id_hash.0,
+                }),
+                "cmd": ChatCommand::Connect as i32,
+                "tid": 1,
+                "cid": chat_id.as_str(),
+                "svcid": "game",
+                "ver": "3",
+            })
             .to_string(),
         );
 
@@ -155,27 +154,27 @@ impl ChatClient {
         let chat_id = chat_id_lock.as_ref().unwrap().as_str();
 
         let chat_msg = Message::from(
-            json::object! {
-                bdy: {
-                    extras: json::object! {
-                        chatType: "STREAMING",
-                        osType: "PC",
-                        // extraToken: extra_token,
-                        streamingChannelId: self.channel_id.clone(),
-                        emojis: json::object! {},
-                    }.to_string().as_str(),
-                    msg: message,
-                    msgTime: unix_time,
-                    msgTypeCode: ChatType::Text as i32
+            serde_json::json!({
+                "bdy": {
+                    "extras": serde_json::json!({
+                        "chatType": "STREAMING",
+                        "osType": "PC",
+                        // "extraToken": extra_token,
+                        "streamingChannelId": self.channel_id.clone(),
+                        "emojis": serde_json::json!({}),
+                    }).to_string().as_str(),
+                    "msg": message,
+                    "msgTime": unix_time,
+                    "msgTypeCode": ChatType::Text as i32
                 },
-                retry: false,
-                cmd: ChatCommand::SendChat as i32,
-                sid: sid,
-                tid: 2,
-                cid: chat_id,
-                svcid: "game",
-                ver: "3",
-            }
+                "retry": false,
+                "cmd": ChatCommand::SendChat as i32,
+                "sid": sid,
+                "tid": 2,
+                "cid": chat_id,
+                "svcid": "game",
+                "ver": "3",
+            })
             .to_string(),
         );
 
@@ -212,46 +211,46 @@ impl ChatClient {
         }
     }
 
-    async fn do_handle(read_stream: &mut ReadStream, chat: &mut ChatClient) -> Result<(), Error> {
+    async fn do_handle(read_stream: &mut ReadStream, client: &mut ChatClient) -> Result<(), Error> {
         let message = read_stream
-            .next()
+            .next() // read
             .await
             .ok_or("None in event handler")? // next() returned None
             .map_err(chain_error!("websocket disconnected")); // next() returned Err. disconnected
 
         if let Err(err) = message {
-            chat.disconnect().await;
+            client.disconnect().await;
             return Err(err);
         }
 
-        let message = message
+        let text = message
             .unwrap()
             .into_text()
             .map_err(chain_error!("do_handle: message is not a text"))?; // message is not text
 
-        println!("Recieved {message}");
+        println!("Recieved {text}");
 
-        let json = match json::parse(message.as_str())
-            .map_err(chain_error!("do_handle: message is not a json."))?
-        {
-            json::JsonValue::Object(object) => object,
-            not_object => Err(format!("Not an object {}", not_object))?,
-        };
+        let json = serde_json::from_str::<Value>(text.as_str())
+            .map_err(chain_error!("do_handle: message is not a json."))?;
+        // {
+        //     json::JsonValue::Object(object) => object,
+        //     not_object => Err(format!("Not an object {}", not_object))?,
+        // };
 
-        let cmd = ChatCommand::try_from(simple_get_as!(json, "cmd", as_i32)?)
+        let cmd = ChatCommand::try_from(simple_get_as!(json, "cmd", as_i64)?)
             .or(Err("Wrong command."))?;
 
         let body = simple_get!(json, "bdy")?;
 
         match cmd {
             ChatCommand::Ping => todo!(),
-            ChatCommand::Pong => {},
+            ChatCommand::Pong => {}
             ChatCommand::Connect => todo!(),
             ChatCommand::Connected => {
-                let body = jsonvalue_unwrap_or_return!(JsonValue::Object, body)
+                let body = jsonvalue_unwrap_or_return!(Value::Object, body)
                     .map_err(chain_error!("do_handle.connected"))?;
                 let sid = simple_get_as!(body, "sid", as_str)?;
-                *chat.sid.lock().await = Some(sid.into());
+                *client.sid.lock().await = Some(sid.into());
 
                 // todo!()
             }
@@ -259,26 +258,9 @@ impl ChatClient {
             ChatCommand::RecentChat => {}
             ChatCommand::Event => todo!(),
             ChatCommand::Chat => {
-                let body = jsonvalue_unwrap_or_return!(JsonValue::Array, body)
+                let chats = jsonvalue_unwrap_or_return!(Value::Array, body)
                     .map_err(chain_error!("do_handle.chat"))?;
-                let body = jsonvalue_unwrap_or_return!(JsonValue::Object, &body[0])
-                    .map_err(chain_error!("do_handle.chat"))?;
-
-                let time =
-                    UNIX_EPOCH + Duration::from_millis(simple_get_as!(body, "ctime", as_u64)?);
-                let message = simple_get_as!(body, "msg", as_str)?.to_string();
-                let user = UserIdHash(simple_get_as!(body, "uid", as_str)?.to_string());
-
-                chat.event_handlers
-                    .lock()
-                    .await
-                    .chat
-                    .broadcast(ChatEvent {
-                        time,
-                        message,
-                        user,
-                    })
-                    .await;
+                ChatClient::handle_chat(client, chats).await?;
             }
             ChatCommand::Donation => todo!(),
             ChatCommand::Kick => todo!(),
@@ -292,12 +274,37 @@ impl ChatClient {
         Ok(())
     }
 
-    async fn poll(chat: ChatClient) {
-        while chat.write_stream.lock().await.is_some() {
+    async fn handle_chat(client: &ChatClient, chats: &[Value]) -> Result<(), Error> {
+        for chat in chats {
+            let body = jsonvalue_unwrap_or_return!(Value::Object, &chat)
+                .map_err(chain_error!("do_handle.chat"))?;
+
+            let time = UNIX_EPOCH + Duration::from_millis(simple_get_as!(body, "ctime", as_u64)?);
+            let message = simple_get_as!(body, "msg", as_str)?.to_string();
+            let user = UserIdHash(simple_get_as!(body, "uid", as_str)?.to_string());
+
+            client
+                .event_handlers
+                .lock()
+                .await
+                .chat
+                .broadcast(ChatEvent {
+                    time,
+                    message,
+                    user,
+                })
+                .await;
+        }
+
+        Ok(())
+    }
+
+    async fn poll(client: ChatClient) {
+        while client.write_stream.lock().await.is_some() {
             tokio::time::sleep(Duration::from_secs(60)).await;
 
-            match ChatClient::do_poll(&chat.client, chat.channel_id.as_str()).await {
-                Ok(chat_id) => *chat.chat_id.lock().await = Some(chat_id.clone()),
+            match ChatClient::do_poll(&client.client, client.channel_id.as_str()).await {
+                Ok(chat_id) => *client.chat_id.lock().await = Some(chat_id.clone()),
                 Err(err) => {
                     println!("poll error: {:?}", err);
                     // chat.disconnect();
@@ -315,15 +322,18 @@ impl ChatClient {
             .chat_channel_id)
     }
 
-    async fn ping(chat: ChatClient) {
-        let ping_object = Message::from(json::object! {
-            cmd: ChatCommand::Ping as i32,
-            ver: "2"
-        }.to_string());
+    async fn ping(client: ChatClient) {
+        let ping_object = Message::from(
+            serde_json::json!({
+                "cmd": ChatCommand::Ping as i32,
+                "ver": "2"
+            })
+            .to_string(),
+        );
 
-        while chat.write_stream.lock().await.is_some() {
+        while client.write_stream.lock().await.is_some() {
             tokio::time::sleep(Duration::from_secs(20)).await;
-            chat.send_message(ping_object.clone()).await.unwrap();
+            let _ = client.send_message(ping_object.clone()).await;
         }
     }
 
@@ -347,8 +357,8 @@ impl ChatClient {
 //     chatter.send_chat("test send_chat").await.unwrap();
 
 //     // let req = Message::from(
-//     //     json::object! {
-//     //         bdy: json::object! {
+//     //     serde_json::json! {
+//     //         bdy: serde_json::json! {
 //     //             recentMessageCount: 1
 //     //         },
 //     //         cmd: ChatCommand::RequestRecentChat as i32,

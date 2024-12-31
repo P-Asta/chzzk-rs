@@ -17,6 +17,17 @@ macro_rules! back_to_enum {
                 }
             }
         }
+
+        impl std::convert::TryFrom<i64> for $name {
+            type Error = ();
+
+            fn try_from(v: i64) -> Result<Self, Self::Error> {
+                match v {
+                    $(x if x == $name::$vname as i64 => Ok($name::$vname),)*
+                    _ => Err(()),
+                }
+            }
+        }
     }
 }
 
