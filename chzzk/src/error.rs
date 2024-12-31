@@ -11,12 +11,6 @@ macro_rules! chain_error {
 
 pub(crate) use chain_error;
 
-// impl ChzzkError {
-//     fn new(message: &str, source: Box<dyn std::error::Error>) {
-
-//     }
-// }
-
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         None

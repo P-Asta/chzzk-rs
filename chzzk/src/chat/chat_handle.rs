@@ -1,12 +1,12 @@
 use std::{future::Future, pin::Pin, time::SystemTime};
 
-use crate::client::User;
+use crate::user::UserIdHash;
 
 #[derive(Clone)]
 pub struct ChatEvent {
     pub time: SystemTime,
     pub message: String,
-    pub user: User,
+    pub user: UserIdHash,
 }
 
 pub(crate) trait Handler<T>: Send + Clone + 'static {

@@ -5,10 +5,14 @@ publish = false
 edition = "2021"
 license = "MIT"
 
+[dependencies]
+chzzk = { path = "../chzzk" }
+tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
+
+[[example]]
+name = "connect_chat"
+path = "connect_chat.rs"
+
 [[example]]
 name = "get_channel_info"
 path = "get_channel_info.rs"
-
-[dependencies]
-chzzk = { path = "../chzzk" }
-tokio = { version = "1.42.0" }

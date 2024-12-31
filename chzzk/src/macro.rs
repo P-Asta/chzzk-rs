@@ -26,9 +26,10 @@ pub(crate) use jsonvalue_unwrap_or_return;
 /// ```
 macro_rules! simple_get {
     ($object: expr, $key: expr) => {
-        $object
-            .get($key)
-            .ok_or(Error(format!("wrong {} (not an attr). {:?}", $key, $object), None))
+        $object.get($key).ok_or(Error(
+            format!("wrong {} (not an attr). {:?}", $key, $object),
+            None,
+        ))
     };
 }
 
@@ -48,11 +49,11 @@ macro_rules! simple_get_as {
 
 pub(crate) use simple_get_as;
 
-macro_rules! unwrap_content {
+macro_rules! _unwrap_content {
     ($response_object:expr) => {{
         let content = simple_get!($response_object, "content")?;
         jsonvalue_unwrap_or_return!(JsonValue::Object, content)?
     }};
 }
 
-pub(crate) use unwrap_content;
+// pub(crate) use unwrap_content;

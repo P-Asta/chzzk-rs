@@ -12,11 +12,11 @@ use json::JsonValue;
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::client::User;
+use crate::user::UserIdHash;
 
 use super::{
     super::{
-        chzzk_error::{chain_error, Error},
+        error::{chain_error, Error},
         client::ChzzkClient,
         r#macro::{jsonvalue_unwrap_or_return, simple_get, simple_get_as},
     },
@@ -68,17 +68,15 @@ impl ChatClient {
         // Get ChatID
         let channel_status = self
             .client
-            .get_live_channel_status(self.channel_id.as_str())
-            .await;
-        let chat_id = channel_status
-            .map_err(chain_error!("chat.connect: live_channel_status error"))?
-            .ok_or("chat.connect: not livestreaming")?
-            .chat_id;
+            .get_channel_live_status(self.channel_id.as_str())
+            .await
+            .map_err(chain_error!("chat.connect: live_channel_status error"))?;
+        let chat_id = channel_status.chat_channel_id;
 
         *self.chat_id.lock().await = Some(chat_id.clone());
 
         // Get UID
-        let user_id = self.client.get_user_status().await.map_err(chain_error!(
+        let user = self.client.get_user_status().await.map_err(chain_error!(
             "chat.connect: get_user_status error. maybe wrong auth information"
         ))?;
 
@@ -112,7 +110,7 @@ impl ChatClient {
                     accTkn: chat_status.access_token,
                     auth: "SEND",
                     devType: 2001,
-                    uid: user_id.0,
+                    uid: user.user_id_hash.0,
                 },
                 cmd: ChatCommand::Connect as i32,
                 tid: 1,
@@ -268,7 +266,7 @@ impl ChatClient {
                 let time =
                     UNIX_EPOCH + Duration::from_millis(simple_get_as!(body, "ctime", as_u64)?);
                 let message = simple_get_as!(body, "msg", as_str)?.to_string();
-                let user = User(simple_get_as!(body, "uid", as_str)?.to_string());
+                let user = UserIdHash(simple_get_as!(body, "uid", as_str)?.to_string());
 
                 chat.event_handlers
                     .lock()
@@ -309,11 +307,11 @@ impl ChatClient {
     }
 
     async fn do_poll(client: &ChzzkClient, channel_id: &str) -> Result<String, Error> {
-        let channel_status = client.get_live_channel_status(channel_id).await;
+        let channel_status = client.get_channel_live_status(channel_id).await;
         Ok(channel_status
             .map_err(chain_error!("poll: live_channel_status error"))?
-            .ok_or("poll: not livestreaming")?
-            .chat_id)
+            .open_or("poll: not livestreaming")?
+            .chat_channel_id)
     }
 
     pub async fn register_on_chat<F, Fut>(&self, f: F)
@@ -326,27 +324,27 @@ impl ChatClient {
     }
 }
 
-#[tokio::test]
-async fn test_chat() {
-    use crate::env::{AUT, SES};
-    let mut c = ChzzkClient::new();
-    c.sign_in(AUT, SES);
-    let mut chatter = ChatClient::new(c, "1dac6492f81d89e261f692bb6b79ff57"); // ray_remi 1dac6492f81d89e261f692bb6b79ff57
-    chatter.connect().await.unwrap();
-    chatter.send_chat("test send_chat").await.unwrap();
+// #[tokio::test]
+// async fn test_chat() {
+//     use crate::env::{AUT, SES};
+//     let mut c = ChzzkClient::new();
+//     c.sign_in(AUT, SES);
+//     let mut chatter = ChatClient::new(c, "1dac6492f81d89e261f692bb6b79ff57"); // ray_remi 1dac6492f81d89e261f692bb6b79ff57
+//     chatter.connect().await.unwrap();
+//     chatter.send_chat("test send_chat").await.unwrap();
 
-    // let req = Message::from(
-    //     json::object! {
-    //         bdy: json::object! {
-    //             recentMessageCount: 1
-    //         },
-    //         cmd: ChatCommand::RequestRecentChat as i32,
-    //         sid: sid,
-    //         tid: 2,
-    //         cid: chat_id,
-    //         svcid: "game",
-    //         ver: "3",
-    //     }
-    //     .to_string(),
-    // );
-}
+//     // let req = Message::from(
+//     //     json::object! {
+//     //         bdy: json::object! {
+//     //             recentMessageCount: 1
+//     //         },
+//     //         cmd: ChatCommand::RequestRecentChat as i32,
+//     //         sid: sid,
+//     //         tid: 2,
+//     //         cid: chat_id,
+//     //         svcid: "game",
+//     //         ver: "3",
+//     //     }
+//     //     .to_string(),
+//     // );
+// }
