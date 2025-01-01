@@ -1,3 +1,4 @@
 /target
 helper/json_str.py
 helper/__pycache__/
+examples/auth.txt
