@@ -340,7 +340,7 @@ impl ChatClient {
     pub async fn register_on_chat<F, Fut>(&self, f: F)
     where
         F: FnOnce(ChatEvent) -> Fut + Clone + Send + Sync + 'static,
-        Fut: Future<Output = ()> + Send,
+        Fut: Future<Output = ()> + Send + 'static,
     {
         let ff = HandlerHolder { handler: f };
         self.event_handlers.lock().await.chat.0.push(Box::new(ff))

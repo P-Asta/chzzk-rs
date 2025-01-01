@@ -5,7 +5,7 @@ use std::io::{self, BufRead};
 /// You need to fill `auth.txt` with your own AUT and SES values from browser cookies
 /// in order to run some examples.
 pub fn get_aut_ses_from_env() -> (String, String) {
-    let file = File::open("examples\\auth.txt").unwrap();
+    let file = File::open("auth.txt").unwrap();
     let reader = io::BufReader::new(file);
 
     // Collect the first two lines.

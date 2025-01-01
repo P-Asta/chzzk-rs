@@ -16,11 +16,11 @@ pub(crate) trait Handler<T>: Send + Clone + 'static {
 impl<F, Fut, T> Handler<T> for F
 where
     F: FnOnce(T) -> Fut + Clone + Send + 'static,
-    Fut: Future<Output = ()> + Send,
+    Fut: Future<Output = ()> + Send + 'static,
     T: Send + 'static,
 {
     fn call(self, v: T) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        Box::pin(async move { self(v).await })
+        Box::pin(self(v))
     }
 }
 
