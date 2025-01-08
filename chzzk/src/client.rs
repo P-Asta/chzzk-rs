@@ -1,5 +1,5 @@
 use crate::{
-    channel::{ChannelLiveStatus, ChatAccessToken, ChatChannelId},
+    channel::{ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
     error::{chain_error, Error},
     user::User,
     Response,
@@ -100,11 +100,12 @@ impl ChzzkClient {
     /// This function will return an error if .
     pub async fn get_channel_live_status(
         &self,
-        channel_id: &str,
+        channel_id: &ChannelId,
     ) -> Result<ChannelLiveStatus, Error> {
         let response_object = self
             .request_chzzk::<Response<ChannelLiveStatus>>(format!(
-                "polling/v2/channels/{channel_id}/live-status"
+                "polling/v2/channels/{}/live-status",
+                *channel_id
             ))
             .await?;
 
@@ -135,7 +136,7 @@ impl ChzzkClient {
         let response_object = self
             .request_game::<Response<ChatAccessToken>>(format!(
                 "v1/chats/access-token?channelId={}&chatType=STREAMING",
-                chat_id.0
+                chat_id
             ))
             .await?;
 

@@ -6,7 +6,7 @@ mod auth;
 async fn main() {
     let auth = auth::get_aut_ses_from_env();
     let client = ChzzkClient::new_with_sign_in(auth.0.as_str(), auth.1.as_str());
-    let mut chat = ChatClient::new(client, "1dac6492f81d89e261f692bb6b79ff57");
+    let mut chat = ChatClient::new(client, &"1dac6492f81d89e261f692bb6b79ff57".into());
     chat.connect().await.unwrap();
     let cc = chat.clone();
     chat.register_on_chat(|x| async move {

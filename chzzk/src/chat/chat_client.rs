@@ -11,7 +11,7 @@ use std::{
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::{channel::ChatChannelId, user::UserIdHash};
+use crate::{channel::{ChannelId, ChatChannelId}, user::UserIdHash};
 
 use super::{
     super::{
@@ -33,7 +33,7 @@ type ReadStream =
 #[derive(Clone)]
 pub struct ChatClient {
     client: ChzzkClient,
-    channel_id: String,
+    channel_id: ChannelId,
     write_stream: Arc<Mutex<Option<WriteStream>>>,
     sid: Arc<Mutex<Option<String>>>,
     chat_id: Arc<Mutex<Option<ChatChannelId>>>,
@@ -45,10 +45,10 @@ struct EventHandlerCollection {
 }
 
 impl ChatClient {
-    pub fn new(client: ChzzkClient, channel_id: &str) -> Self {
+    pub fn new(client: ChzzkClient, channel_id: &ChannelId) -> Self {
         Self {
             client,
-            channel_id: channel_id.to_string(),
+            channel_id: channel_id.clone(),
             write_stream: Arc::new(Mutex::new(None)),
             sid: Arc::new(Mutex::new(None)),
             chat_id: Arc::new(Mutex::new(None)),
@@ -67,7 +67,7 @@ impl ChatClient {
         // Get ChatID
         let channel_status = self
             .client
-            .get_channel_live_status(self.channel_id.as_str())
+            .get_channel_live_status(&self.channel_id)
             .await
             .map_err(chain_error!("chat.connect: live_channel_status error"))?;
         let chat_id = channel_status.chat_channel_id;
@@ -303,7 +303,7 @@ impl ChatClient {
         while client.write_stream.lock().await.is_some() {
             tokio::time::sleep(Duration::from_secs(60)).await;
 
-            match ChatClient::do_poll(&client.client, client.channel_id.as_str()).await {
+            match ChatClient::do_poll(&client.client, &client.channel_id).await {
                 Ok(chat_id) => *client.chat_id.lock().await = Some(chat_id.clone()),
                 Err(err) => {
                     println!("poll error: {:?}", err);
@@ -314,7 +314,7 @@ impl ChatClient {
         }
     }
 
-    async fn do_poll(client: &ChzzkClient, channel_id: &str) -> Result<ChatChannelId, Error> {
+    async fn do_poll(client: &ChzzkClient, channel_id: &ChannelId) -> Result<ChatChannelId, Error> {
         let channel_status = client.get_channel_live_status(channel_id).await;
         Ok(channel_status
             .map_err(chain_error!("poll: live_channel_status error"))?

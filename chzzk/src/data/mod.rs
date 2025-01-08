@@ -19,11 +19,23 @@ macro_rules! string_like {
             }
         }
 
+        impl Into<$name> for &str {
+            fn into(self) -> $name {
+                self.to_string().into()
+            }
+        }
+
         impl Deref for $name {
             type Target = String;
         
             fn deref(&self) -> &Self::Target {
                 &self.0
+            }
+        }
+
+        impl std::fmt::Display for $name { 
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
             }
         }
     };
