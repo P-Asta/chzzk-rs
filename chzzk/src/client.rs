@@ -105,7 +105,7 @@ impl ChzzkClient {
         let response_object = self
             .request_chzzk::<Response<ChannelLiveStatus>>(format!(
                 "polling/v2/channels/{}/live-status",
-                *channel_id
+                **channel_id
             ))
             .await?;
 
@@ -136,7 +136,7 @@ impl ChzzkClient {
         let response_object = self
             .request_game::<Response<ChatAccessToken>>(format!(
                 "v1/chats/access-token?channelId={}&chatType=STREAMING",
-                chat_id
+                **chat_id
             ))
             .await?;
 
