@@ -11,7 +11,7 @@ use std::{
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::user::UserIdHash;
+use crate::{channel::ChatChannelId, user::UserIdHash};
 
 use super::{
     super::{
@@ -36,7 +36,7 @@ pub struct ChatClient {
     channel_id: String,
     write_stream: Arc<Mutex<Option<WriteStream>>>,
     sid: Arc<Mutex<Option<String>>>,
-    chat_id: Arc<Mutex<Option<String>>>,
+    chat_id: Arc<Mutex<Option<ChatChannelId>>>,
     event_handlers: Arc<Mutex<EventHandlerCollection>>,
 }
 
@@ -82,7 +82,7 @@ impl ChatClient {
         // Get accTkn
         let chat_status = self
             .client
-            .get_access_token(chat_id.as_str())
+            .get_access_token(&chat_id)
             .await
             .map_err(chain_error!("chat.connect: get_access_token error"))?;
 
@@ -314,7 +314,7 @@ impl ChatClient {
         }
     }
 
-    async fn do_poll(client: &ChzzkClient, channel_id: &str) -> Result<String, Error> {
+    async fn do_poll(client: &ChzzkClient, channel_id: &str) -> Result<ChatChannelId, Error> {
         let channel_status = client.get_channel_live_status(channel_id).await;
         Ok(channel_status
             .map_err(chain_error!("poll: live_channel_status error"))?

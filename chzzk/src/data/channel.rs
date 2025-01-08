@@ -1,9 +1,14 @@
+use std::ops::Deref;
 use crate::ChzzkDateTime;
+use super::string_like;
+
+string_like! {ChannelId} // Hexadecimal channel id
+string_like! {ChatChannelId} // 6-letters-long chat id
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Channel {
     #[serde(rename = "channelId")]
-    pub channel_id: String,
+    pub channel_id: ChannelId,
     #[serde(rename = "channelName")]
     pub channel_name: String,
     #[serde(rename = "channelImageUrl")]
@@ -74,7 +79,7 @@ pub struct ChannelLiveStatus {
     #[serde(rename = "clipActive")]
     pub clip_active: bool,
     #[serde(rename = "chatChannelId")]
-    pub chat_channel_id: String,
+    pub chat_channel_id: ChatChannelId,
     pub tags: Vec<String>,
     #[serde(rename = "categoryType")]
     pub category_type: String,

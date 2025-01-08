@@ -1,5 +1,7 @@
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub struct UserIdHash(pub String);
+use std::ops::Deref;
+use super::string_like;
+
+string_like! {UserIdHash}
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct User {
