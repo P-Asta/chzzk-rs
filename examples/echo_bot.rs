@@ -12,7 +12,6 @@ async fn main() {
     chat.register_on_chat(|x| async move {
         println!("{}", x.message);
         cc.send_chat(x.message.as_str()).await.unwrap();
-    })
-    .await;
+    });
     tokio::time::sleep(Duration::from_secs(120)).await;
 }
