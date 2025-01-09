@@ -19,8 +19,9 @@ use super::{
         error::{chain_error, Error},
         r#macro::{jsonvalue_unwrap_or_return, simple_get, simple_get_as},
     },
-    chat_handle::*,
+    handler_vec::*,
     types::*,
+    *,
 };
 
 type WriteStream = SplitSink<

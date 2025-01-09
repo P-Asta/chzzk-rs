@@ -1,13 +1,6 @@
-use std::{future::Future, pin::Pin, time::SystemTime};
+use std::{future::Future, pin::Pin};
 
-use crate::user::UserIdHash;
 
-#[derive(Clone)]
-pub struct ChatEvent {
-    pub time: SystemTime,
-    pub message: String,
-    pub user: UserIdHash,
-}
 
 pub(crate) trait Handler<T>: Send + Clone + 'static {
     fn call(self, v: T) -> Pin<Box<dyn Future<Output = ()> + Send>>;
