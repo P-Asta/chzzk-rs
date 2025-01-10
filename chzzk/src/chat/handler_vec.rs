@@ -2,15 +2,15 @@ use std::{future::Future, pin::Pin};
 
 
 
-pub(crate) trait Handler<T>: Send + Clone + 'static {
+pub(crate) trait Handler<T>: Send + Clone {
     fn call(self, v: T) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 }
 
 impl<F, Fut, T> Handler<T> for F
 where
-    F: FnOnce(T) -> Fut + Clone + Send + 'static,
+    F: FnOnce(T) -> Fut + Clone + Send,
     Fut: Future<Output = ()> + Send + 'static,
-    T: Send + 'static,
+    T: Send,
 {
     fn call(self, v: T) -> Pin<Box<dyn Future<Output = ()> + Send>> {
         Box::pin(self(v))
@@ -27,7 +27,7 @@ pub(super) trait HandlerTrait<T>: Send + Sync {
 
 impl<H, T> HandlerTrait<T> for HandlerHolder<H>
 where
-    H: Handler<T> + Clone + Send + Sync + 'static,
+    H: Handler<T> + Clone + Send + Sync ,
     T: Send,
 {
     fn call(&self, v: T) -> Pin<Box<dyn Future<Output = ()> + Send>> {

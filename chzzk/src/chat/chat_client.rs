@@ -35,10 +35,14 @@ type ReadStream =
 pub struct ChatClient {
     client: ChzzkClient,
     channel_id: ChannelId,
-    write_stream: Arc<Mutex<Option<WriteStream>>>,
-    sid: Arc<Mutex<Option<String>>>,
-    chat_id: Arc<Mutex<Option<ChatChannelId>>>,
-    event_handlers: Arc<Mutex<EventHandlerCollection>>,
+    inner: Arc<Inner>,
+}
+
+struct Inner {
+    write_stream: Mutex<Option<WriteStream>>,
+    sid: Mutex<Option<String>>,
+    chat_id: Mutex<Option<ChatChannelId>>,
+    event_handlers: Mutex<EventHandlerCollection>,
 }
 
 struct EventHandlerCollection {
@@ -50,17 +54,19 @@ impl ChatClient {
         Self {
             client,
             channel_id: channel_id.clone(),
-            write_stream: Arc::new(Mutex::new(None)),
-            sid: Arc::new(Mutex::new(None)),
-            chat_id: Arc::new(Mutex::new(None)),
-            event_handlers: Arc::new(Mutex::new(EventHandlerCollection {
-                chat: HandlerVec::new(),
-            })),
+            inner: Arc::new(Inner {
+                write_stream: Mutex::new(None),
+                sid: Mutex::new(None),
+                chat_id: Mutex::new(None),
+                event_handlers: Mutex::new(EventHandlerCollection {
+                    chat: HandlerVec::new(),
+                }),
+            }),
         }
     }
 
     pub async fn connect(&mut self) -> Result<(), Error> {
-        if self.write_stream.lock().await.is_some() {
+        if self.inner.write_stream.lock().await.is_some() {
             // already connected
             return Err("chat.connect: already_connected".into());
         }
@@ -73,7 +79,7 @@ impl ChatClient {
             .map_err(chain_error!("chat.connect: live_channel_status error"))?;
         let chat_id = channel_status.chat_channel_id;
 
-        *self.chat_id.lock().await = Some(chat_id.clone());
+        *self.inner.chat_id.lock().await = Some(chat_id.clone());
 
         // Get UID
         let user = self.client.get_user_status().await.map_err(chain_error!(
@@ -96,7 +102,7 @@ impl ChatClient {
         let (write, read) = stream.split();
 
         // Store in self
-        *self.write_stream.lock().await = Some(write);
+        *self.inner.write_stream.lock().await = Some(write);
         println!("Response: {}", response.status(),);
 
         // Run handler
@@ -124,7 +130,7 @@ impl ChatClient {
 
         self.send_message(payload).await.unwrap();
 
-        while self.sid.lock().await.is_none() {
+        while self.inner.sid.lock().await.is_none() {
             // spin until ack comes. empirically it spinned five times.
             tokio::time::sleep(Duration::from_millis(1)).await;
             // todo! timeout
@@ -134,13 +140,13 @@ impl ChatClient {
     }
 
     pub async fn disconnect(&mut self) {
-        self.write_stream.lock().await.take();
-        self.chat_id.lock().await.take();
-        self.sid.lock().await.take();
+        self.inner.write_stream.lock().await.take();
+        self.inner.chat_id.lock().await.take();
+        self.inner.sid.lock().await.take();
     }
 
     pub async fn send_chat(&self, message: &str) -> Result<(), Error> {
-        if self.write_stream.lock().await.is_none() {
+        if self.inner.write_stream.lock().await.is_none() {
             return Err("not connected".into());
         }
 
@@ -149,9 +155,9 @@ impl ChatClient {
             .unwrap()
             .as_secs();
 
-        let sid_lock = self.sid.lock().await;
+        let sid_lock = self.inner.sid.lock().await;
         let sid = sid_lock.as_ref().unwrap().as_str();
-        let chat_id_lock = self.chat_id.lock().await;
+        let chat_id_lock = self.inner.chat_id.lock().await;
         let chat_id = chat_id_lock.as_ref().unwrap().as_str();
 
         let chat_msg = Message::from(
@@ -193,7 +199,7 @@ impl ChatClient {
     /// This function will return an error if send fails.
     async fn send_message(&self, message: Message) -> Result<(), Error> {
         println!("Sent {message}");
-        match &mut *self.write_stream.lock().await {
+        match &mut *self.inner.write_stream.lock().await {
             Some(s) => s.send(message).await.map_err(chain_error!("send failed")),
             None => Err("Not connected".into()),
         }
@@ -201,7 +207,7 @@ impl ChatClient {
 
     async fn response_handler(mut read_stream: ReadStream, mut chat: ChatClient) {
         println!("handler runs");
-        while chat.write_stream.lock().await.is_some() {
+        while chat.inner.write_stream.lock().await.is_some() {
             if let Err(err) = ChatClient::do_handle(&mut read_stream, &mut chat).await {
                 println!("event_handler caught error: {err}");
                 if err.0 == "websocket disconnected." {
@@ -251,7 +257,7 @@ impl ChatClient {
                 let body = jsonvalue_unwrap_or_return!(Value::Object, body)
                     .map_err(chain_error!("do_handle.connected"))?;
                 let sid = simple_get_as!(body, "sid", as_str)?;
-                *client.sid.lock().await = Some(sid.into());
+                *client.inner.sid.lock().await = Some(sid.into());
 
                 // todo!()
             }
@@ -285,6 +291,7 @@ impl ChatClient {
             let user = UserIdHash(simple_get_as!(body, "uid", as_str)?.to_string());
 
             client
+                .inner
                 .event_handlers
                 .lock()
                 .await
@@ -301,11 +308,11 @@ impl ChatClient {
     }
 
     async fn poll(client: ChatClient) {
-        while client.write_stream.lock().await.is_some() {
+        while client.inner.write_stream.lock().await.is_some() {
             tokio::time::sleep(Duration::from_secs(60)).await;
 
             match ChatClient::do_poll(&client.client, &client.channel_id).await {
-                Ok(chat_id) => *client.chat_id.lock().await = Some(chat_id.clone()),
+                Ok(chat_id) => *client.inner.chat_id.lock().await = Some(chat_id.clone()),
                 Err(err) => {
                     println!("poll error: {:?}", err);
                     // chat.disconnect();
@@ -332,7 +339,7 @@ impl ChatClient {
             .to_string(),
         );
 
-        while client.write_stream.lock().await.is_some() {
+        while client.inner.write_stream.lock().await.is_some() {
             tokio::time::sleep(Duration::from_secs(20)).await;
             let _ = client.send_message(ping_object.clone()).await;
         }
@@ -344,7 +351,7 @@ impl ChatClient {
         Fut: Future<Output = ()> + Send + 'static,
     {
         let ff = HandlerHolder { handler: f };
-        self.event_handlers.lock().await.chat.0.push(Box::new(ff))
+        self.inner.event_handlers.lock().await.chat.0.push(Box::new(ff))
     }
 }
 
