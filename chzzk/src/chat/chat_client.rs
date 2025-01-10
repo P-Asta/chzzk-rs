@@ -11,7 +11,7 @@ use std::{
 use tokio::sync::Mutex;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::{channel::{ChannelId, ChatChannelId}, user::UserIdHash};
+use crate::channel::{ChannelId, ChatChannelId};
 
 use super::{
     super::{
@@ -288,7 +288,7 @@ impl ChatClient {
 
             let time = UNIX_EPOCH + Duration::from_millis(simple_get_as!(body, "ctime", as_u64)?);
             let message = simple_get_as!(body, "msg", as_str)?.to_string();
-            let user = UserIdHash(simple_get_as!(body, "uid", as_str)?.to_string());
+            let user = ChannelId(simple_get_as!(body, "uid", as_str)?.to_string());
 
             client
                 .inner

@@ -4,12 +4,12 @@ mod types;
 
 pub use chat_client::ChatClient;
 
-use crate::user::UserIdHash;
+use crate::channel::ChannelId;
 use std::time::SystemTime;
 
 #[derive(Clone)]
 pub struct ChatEvent {
     pub time: SystemTime,
     pub message: String,
-    pub user: UserIdHash,
+    pub user: ChannelId,
 }

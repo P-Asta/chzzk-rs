@@ -1,14 +1,12 @@
 use std::ops::Deref;
-use super::string_like;
-
-string_like! {UserIdHash}
+use super::{channel::ChannelId, string_like};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct User {
     #[serde(rename = "hasProfile")]
     pub has_profile: bool,
     #[serde(rename = "userIdHash")]
-    pub user_id_hash: UserIdHash,
+    pub user_id_hash: ChannelId,
     pub nickname: String,
     #[serde(rename = "profileImageUrl")]
     pub profile_image_url: String,
