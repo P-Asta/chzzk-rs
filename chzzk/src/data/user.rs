@@ -1,5 +1,4 @@
-use std::ops::Deref;
-use super::{channel::ChannelId, string_like};
+use super::channel::ChannelId;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct User {

@@ -15,4 +15,3 @@ pub fn get_aut_ses_from_env() -> (String, String) {
 
     (aut, ses)
 }
-

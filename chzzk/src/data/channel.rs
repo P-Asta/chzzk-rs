@@ -1,6 +1,6 @@
-use std::ops::Deref;
-use crate::ChzzkDateTime;
 use super::string_like;
+use crate::ChzzkDateTime;
+use std::ops::Deref;
 
 string_like! {ChannelId} // Hexadecimal channel id
 string_like! {ChatChannelId} // 6-letters-long chat id
@@ -27,6 +27,10 @@ pub struct Channel {
     pub subscription_availability: bool,
     #[serde(rename = "subscriptionPaymentAvailability")]
     pub subscription_payment_availability: SubscriptionPaymentAvailability,
+    #[serde(rename = "adMonetizationAvailability")]
+    pub ad_monetization_availability: bool,
+    // #[serde(rename = "activatedChannelBadgeIds")]
+    // pub activated_channel_badge_ids: Unknown,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]

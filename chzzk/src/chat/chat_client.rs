@@ -351,31 +351,27 @@ impl ChatClient {
         Fut: Future<Output = ()> + Send + 'static,
     {
         let ff = HandlerHolder { handler: f };
-        self.inner.event_handlers.lock().await.chat.0.push(Box::new(ff))
+        self.inner
+            .event_handlers
+            .lock()
+            .await
+            .chat
+            .0
+            .push(Box::new(ff))
     }
 }
 
-// #[tokio::test]
-// async fn test_chat() {
-//     use crate::env::{AUT, SES};
-//     let mut c = ChzzkClient::new();
-//     c.sign_in(AUT, SES);
-//     let mut chatter = ChatClient::new(c, "1dac6492f81d89e261f692bb6b79ff57"); // ray_remi 1dac6492f81d89e261f692bb6b79ff57
-//     chatter.connect().await.unwrap();
-//     chatter.send_chat("test send_chat").await.unwrap();
-
-//     // let req = Message::from(
-//     //     serde_json::json! {
-//     //         bdy: serde_json::json! {
-//     //             recentMessageCount: 1
-//     //         },
-//     //         cmd: ChatCommand::RequestRecentChat as i32,
-//     //         sid: sid,
-//     //         tid: 2,
-//     //         cid: chat_id,
-//     //         svcid: "game",
-//     //         ver: "3",
-//     //     }
-//     //     .to_string(),
-//     // );
-// }
+// let req = Message::from(
+//     serde_json::json! {
+//         bdy: serde_json::json! {
+//             recentMessageCount: 1
+//         },
+//         cmd: ChatCommand::RequestRecentChat as i32,
+//         sid: sid,
+//         tid: 2,
+//         cid: chat_id,
+//         svcid: "game",
+//         ver: "3",
+//     }
+//     .to_string(),
+// );

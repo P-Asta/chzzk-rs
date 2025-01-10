@@ -1,5 +1,5 @@
 use crate::{
-    channel::{ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
+    channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
     error::{chain_error, Error},
     user::User,
     Response,
@@ -97,7 +97,7 @@ impl ChzzkClient {
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// This function will return an error if request fails.
     pub async fn get_channel_live_status(
         &self,
         channel_id: &ChannelId,
@@ -132,7 +132,10 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_access_token(&self, chat_id: &ChatChannelId) -> Result<ChatAccessToken, Error> {
+    pub async fn get_access_token(
+        &self,
+        chat_id: &ChatChannelId,
+    ) -> Result<ChatAccessToken, Error> {
         let response_object = self
             .request_game::<Response<ChatAccessToken>>(format!(
                 "v1/chats/access-token?channelId={}&chatType=STREAMING",
@@ -145,6 +148,20 @@ impl ChzzkClient {
         }
 
         Ok(response_object.content)
+    }
+
+    /// Get channel information.
+    /// ex) https://api.chzzk.naver.com/service/v1/channels/9ae7d38b629b78f48e49fb3106218ff5
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if request fails.
+    pub async fn get_channel_info(&self, channel_id: &ChannelId) -> Result<Channel, Error> {
+        let response = self
+            .request_chzzk::<Response<Channel>>(format!("service/v1/channels/{}", **channel_id))
+            .await?;
+
+        Ok(response.content)
     }
 }
 

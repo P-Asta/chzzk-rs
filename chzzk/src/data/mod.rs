@@ -1,10 +1,11 @@
 pub mod channel;
 pub mod user;
 
-
 macro_rules! string_like {
     ($name: ident) => {
-        #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+        #[derive(
+            serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default,
+        )]
         pub struct $name(pub String);
 
         impl Into<String> for $name {
@@ -21,7 +22,7 @@ macro_rules! string_like {
 
         impl Deref for $name {
             type Target = String;
-        
+
             fn deref(&self) -> &Self::Target {
                 &self.0
             }
