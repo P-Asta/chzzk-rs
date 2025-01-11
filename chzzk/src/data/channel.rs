@@ -12,7 +12,7 @@ pub struct Channel {
     #[serde(rename = "channelName")]
     pub channel_name: String,
     #[serde(rename = "channelImageUrl")]
-    pub channel_image_url: String,
+    pub channel_image_url: Option<String>,
     #[serde(rename = "verifiedMark")]
     pub verified_mark: bool,
     #[serde(rename = "channelType")]
