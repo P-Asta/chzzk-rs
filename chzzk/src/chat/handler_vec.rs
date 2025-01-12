@@ -41,7 +41,7 @@ impl<T: Clone> HandlerVec<T> {
         Self(Vec::new())
     }
 
-    pub async fn broadcast(&mut self, payload: T) {
+    pub async fn broadcast(&self, payload: T) {
         for i in &self.0 {
             i.call(payload.clone()).await;
         }

@@ -1,3 +1,4 @@
+use crate::channel::{ChannelId, ChatChannelId};
 use futures::{
     stream::{SplitSink, SplitStream, StreamExt},
     SinkExt,
@@ -8,10 +9,8 @@ use std::{
     sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
-
-use crate::channel::{ChannelId, ChatChannelId};
 
 use super::{
     super::{
@@ -42,7 +41,7 @@ struct Inner {
     write_stream: Mutex<Option<WriteStream>>,
     sid: Mutex<Option<String>>,
     chat_id: Mutex<Option<ChatChannelId>>,
-    event_handlers: Mutex<EventHandlerCollection>,
+    event_handlers: RwLock<EventHandlerCollection>,
 }
 
 struct EventHandlerCollection {
@@ -58,7 +57,7 @@ impl ChatClient {
                 write_stream: Mutex::new(None),
                 sid: Mutex::new(None),
                 chat_id: Mutex::new(None),
-                event_handlers: Mutex::new(EventHandlerCollection {
+                event_handlers: RwLock::new(EventHandlerCollection {
                     chat: HandlerVec::new(),
                 }),
             }),
@@ -293,7 +292,7 @@ impl ChatClient {
             client
                 .inner
                 .event_handlers
-                .lock()
+                .read()
                 .await
                 .chat
                 .broadcast(ChatEvent {
@@ -353,7 +352,7 @@ impl ChatClient {
         let ff = HandlerHolder { handler: f };
         self.inner
             .event_handlers
-            .lock()
+            .write()
             .await
             .chat
             .0
