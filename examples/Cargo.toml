@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 chzzk = { path = "../chzzk" }
+dotenvy = "0.15.7"
 tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
@@ -20,3 +21,7 @@ path = "echo_bot.rs"
 [[example]]
 name = "get_channel_info"
 path = "get_channel_info.rs"
+
+[[example]]
+name = "pin_chat"
+path = "pin_chat.rs"

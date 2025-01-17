@@ -1,4 +1,4 @@
 /target
 helper/json_str.py
 helper/__pycache__/
-auth.txt
+examples/.env
