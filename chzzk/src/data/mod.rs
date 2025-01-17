@@ -8,15 +8,15 @@ macro_rules! string_like {
         )]
         pub struct $name(pub String);
 
-        impl Into<String> for $name {
-            fn into(self) -> String {
-                self.0
+        impl From<String> for $name {
+            fn from(v: String) -> Self {
+                $name(v)
             }
         }
 
-        impl Into<$name> for String {
-            fn into(self) -> $name {
-                $name(self)
+        impl From<$name> for String {
+            fn from(v: $name) -> Self {
+                v.0
             }
         }
 

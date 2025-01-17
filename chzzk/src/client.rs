@@ -1,5 +1,3 @@
-use reqwest::RequestBuilder;
-
 use crate::{
     channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
     error::{chain_error, Error},
@@ -66,7 +64,7 @@ impl ChzzkClient {
         let response_object =
             Self::chzzk(format!("polling/v2/channels/{}/live-status", **channel_id).as_str())
                 .get()
-                .send::<Response<ChannelLiveStatus>>(&self)
+                .send::<Response<ChannelLiveStatus>>(self)
                 .await?;
 
         Ok(response_object.content)
@@ -79,9 +77,9 @@ impl ChzzkClient {
     ///
     /// This function will return an error if request fails.
     pub async fn get_user_status(&self) -> Result<User, Error> {
-        let response_object = Self::game("v1/user/getUserStatus".into())
+        let response_object = Self::game("v1/user/getUserStatus")
             .get()
-            .send::<Response<User>>(&self)
+            .send::<Response<User>>(self)
             .await?;
         Ok(response_object.content)
     }
@@ -104,7 +102,7 @@ impl ChzzkClient {
             .as_str(),
         )
         .get()
-        .send::<Response<ChatAccessToken>>(&self)
+        .send::<Response<ChatAccessToken>>(self)
         .await?;
 
         if response_object.code == 42601 {
@@ -123,7 +121,7 @@ impl ChzzkClient {
     pub async fn get_channel_info(&self, channel_id: &ChannelId) -> Result<Channel, Error> {
         let response = Self::chzzk(format!("service/v1/channels/{}", **channel_id).as_str())
             .get()
-            .send::<Response<Channel>>(&self)
+            .send::<Response<Channel>>(self)
             .await?;
 
         Ok(response.content)
@@ -134,7 +132,7 @@ impl ChzzkClient {
         channel_id: &ChannelId,
         chat_id: Option<&ChatChannelId>,
         sender: &ChannelId,
-        time: u64
+        time: u64,
     ) -> Result<(), Error> {
         let chat_id = match chat_id {
             Some(x) => x,
@@ -158,7 +156,7 @@ impl ChzzkClient {
 
         Self::game("v1/chats/notices")
             .post(Some(payload.to_string()))
-            .send::<DropResponse>(&self)
+            .send::<DropResponse>(self)
             .await?;
         Ok(())
     }
@@ -197,13 +195,17 @@ impl ChzzkRequestBuilder {
         }
     }
 
-    async fn send<'a, T>(self, client: &ChzzkClient) -> Result<T, Error>
+    async fn send<T>(self, client: &ChzzkClient) -> Result<T, Error>
     where
         T: serde::de::DeserializeOwned,
     {
         println!("request to: {}.", self.url);
         let mut request = if self.is_method_post {
-            client.client.post(self.url).header("Content-Type", "application/json").body(self.body.unwrap_or(String::new()))
+            client
+                .client
+                .post(self.url)
+                .header("Content-Type", "application/json")
+                .body(self.body.unwrap_or_default())
         } else {
             client.client.get(self.url)
         };
