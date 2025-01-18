@@ -20,7 +20,6 @@ use super::{
     },
     handler_vec::*,
     types::*,
-    *,
 };
 
 type WriteStream = SplitSink<
@@ -282,12 +281,8 @@ impl ChatClient {
 
     async fn handle_chat(client: &ChatClient, chats: &[Value]) -> Result<(), Error> {
         for chat in chats {
-            let body = jsonvalue_unwrap_or_return!(Value::Object, &chat)
+            let chat_event = serde_json::from_value::<ChatEvent>(chat.clone())
                 .map_err(chain_error!("do_handle.chat"))?;
-
-            let time = UNIX_EPOCH + Duration::from_millis(simple_get_as!(body, "ctime", as_u64)?);
-            let message = simple_get_as!(body, "msg", as_str)?.to_string();
-            let user = ChannelId(simple_get_as!(body, "uid", as_str)?.to_string());
 
             client
                 .inner
@@ -295,11 +290,7 @@ impl ChatClient {
                 .read()
                 .await
                 .chat
-                .broadcast(ChatEvent {
-                    time,
-                    message,
-                    user,
-                })
+                .broadcast(chat_event)
                 .await;
         }
 
@@ -346,7 +337,7 @@ impl ChatClient {
 
     pub async fn register_on_chat<F, Fut>(&self, f: F)
     where
-        F: FnOnce(ChatEvent) -> Fut + Clone + Send + Sync + 'static,
+        F: FnOnce(Arc<ChatEvent>) -> Fut + Clone + Send + Sync + 'static,
         Fut: Future<Output = ()> + Send + 'static,
     {
         let ff = HandlerHolder { handler: f };

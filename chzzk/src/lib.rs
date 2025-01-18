@@ -18,6 +18,7 @@ pub(crate) struct Response<T> {
     pub content: T,
 }
 
+/// Chzzk Datetime type in form of `YYYY-MM-DD HH:mm:ss`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ChzzkDateTime(SystemTime);
 
@@ -50,5 +51,20 @@ impl From<SystemTime> for ChzzkDateTime {
 impl From<ChzzkDateTime> for SystemTime {
     fn from(value: ChzzkDateTime) -> Self {
         value.0
+    }
+}
+
+#[derive(serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct ChzzkTimestamp(u64);
+
+impl From<SystemTime> for ChzzkTimestamp {
+    fn from(value: SystemTime) -> Self {
+        ChzzkTimestamp(value.duration_since(UNIX_EPOCH).unwrap().as_millis() as u64)
+    }
+}
+
+impl From<ChzzkTimestamp> for SystemTime {
+    fn from(value: ChzzkTimestamp) -> Self {
+        UNIX_EPOCH + Duration::from_millis(value.0)
     }
 }
