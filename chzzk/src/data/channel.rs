@@ -86,7 +86,7 @@ pub struct ChannelLiveStatus {
     pub chat_channel_id: ChatChannelId,
     pub tags: Vec<String>,
     #[serde(rename = "categoryType")]
-    pub category_type: String,
+    pub category_type: Option<String>,
     #[serde(rename = "liveCategory")]
     pub live_category: String,
     #[serde(rename = "liveCategoryValue")]
