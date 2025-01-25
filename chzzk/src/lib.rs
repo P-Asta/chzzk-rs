@@ -68,3 +68,27 @@ impl From<ChzzkTimestamp> for SystemTime {
         UNIX_EPOCH + Duration::from_millis(value.0)
     }
 }
+
+#[cfg(chzzk_debug)]
+macro_rules! debug_println {
+    ($($arg:tt)*) => (println!($($arg)*));
+}
+
+#[cfg(not(chzzk_debug))]
+macro_rules! debug_println {
+    ($($arg:tt)*) => {};
+}
+
+pub(crate) use debug_println;
+
+#[cfg(chzzk_debug)]
+macro_rules! debug_print {
+    ($($arg:tt)*) => (print!($($arg)*));
+}
+
+#[cfg(not(chzzk_debug))]
+macro_rules! debug_print {
+    ($($arg:tt)*) => {};
+}
+
+pub(crate) use debug_print;

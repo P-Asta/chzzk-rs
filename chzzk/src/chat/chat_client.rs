@@ -1,4 +1,4 @@
-use crate::channel::{ChannelId, ChatChannelId};
+use crate::{channel::{ChannelId, ChatChannelId}, debug_println};
 use futures::{
     stream::{SplitSink, SplitStream, StreamExt},
     SinkExt,
@@ -101,7 +101,7 @@ impl ChatClient {
 
         // Store in self
         *self.inner.write_stream.lock().await = Some(write);
-        println!("Response: {}", response.status(),);
+        debug_println!("Response: {}", response.status(),);
 
         // Run handler
         tokio::spawn(ChatClient::response_handler(read, self.clone()));
@@ -196,7 +196,7 @@ impl ChatClient {
     ///
     /// This function will return an error if send fails.
     async fn send_message(&self, message: Message) -> Result<(), Error> {
-        println!("Sent {message}");
+        debug_println!("Sent {message}");
         match &mut *self.inner.write_stream.lock().await {
             Some(s) => s.send(message).await.map_err(chain_error!("send failed")),
             None => Err("Not connected".into()),
@@ -204,10 +204,10 @@ impl ChatClient {
     }
 
     async fn response_handler(mut read_stream: ReadStream, mut chat: ChatClient) {
-        println!("handler runs");
+        debug_println!("handler runs");
         while chat.inner.write_stream.lock().await.is_some() {
             if let Err(err) = ChatClient::do_handle(&mut read_stream, &mut chat).await {
-                println!("event_handler caught error: {err}");
+                debug_println!("event_handler caught error: {err}");
                 if err.0 == "websocket disconnected." {
                     // yeah, this looks bit silly.
                     break;
@@ -233,7 +233,7 @@ impl ChatClient {
             .into_text()
             .map_err(chain_error!("do_handle: message is not a text"))?; // message is not text
 
-        println!("Recieved {text}");
+        debug_println!("Recieved {text}");
 
         let json = serde_json::from_str::<Value>(text.as_str())
             .map_err(chain_error!("do_handle: message is not a json."))?;
@@ -304,7 +304,7 @@ impl ChatClient {
             match ChatClient::do_poll(&client.client, &client.channel_id).await {
                 Ok(chat_id) => *client.inner.chat_id.lock().await = Some(chat_id.clone()),
                 Err(err) => {
-                    println!("poll error: {:?}", err);
+                    debug_println!("poll error: {:?}", err);
                     // chat.disconnect();
                     break;
                 }

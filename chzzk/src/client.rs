@@ -1,8 +1,5 @@
 use crate::{
-    channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
-    error::{chain_error, Error},
-    user::User,
-    Response,
+    channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId}, debug_println, error::{chain_error, Error}, user::User, Response
 };
 
 #[derive(Clone)]
@@ -199,7 +196,7 @@ impl ChzzkRequestBuilder {
     where
         T: serde::de::DeserializeOwned,
     {
-        println!("request to: {}.", self.url);
+        debug_println!("request to: {}.", self.url);
         let mut request = if self.is_method_post {
             client
                 .client
