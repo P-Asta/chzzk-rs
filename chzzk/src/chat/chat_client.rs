@@ -94,7 +94,7 @@ impl ChatClient {
         // Connect to Websocket
         let ss_id = rand::random::<u32>() % 10 + 1; // Load Balancing
         let addr = format!("wss://kr-ss{}.chat.naver.com/chat", ss_id);
-        let (stream, response) = tokio_tungstenite::connect_async(addr)
+        let (stream, _response) = tokio_tungstenite::connect_async(addr)
             .await
             .map_err(chain_error!("chat.connect: websocket connect failed"))?;
         let (write, read) = stream.split();
@@ -303,7 +303,7 @@ impl ChatClient {
 
             match ChatClient::do_poll(&client.client, &client.channel_id).await {
                 Ok(chat_id) => *client.inner.chat_id.lock().await = Some(chat_id.clone()),
-                Err(err) => {
+                Err(_err) => {
                     debug_println!("poll error: {:?}", err);
                     // chat.disconnect();
                     break;
