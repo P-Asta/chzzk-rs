@@ -74,13 +74,13 @@ impl ChatClient {
             .client
             .get_channel_live_status(&self.channel_id)
             .await
-            .map_err(chain_error!("chat.connect: live_channel_status error"))?;
+            .map_err(chain_error("chat.connect: live_channel_status error"))?;
         let chat_id = channel_status.chat_channel_id;
 
         *self.inner.chat_id.lock().await = Some(chat_id.clone());
 
         // Get UID
-        let user = self.client.get_user_status().await.map_err(chain_error!(
+        let user = self.client.get_user_status().await.map_err(chain_error(
             "chat.connect: get_user_status error. maybe wrong auth information"
         ))?;
 
@@ -89,14 +89,14 @@ impl ChatClient {
             .client
             .get_access_token(&chat_id)
             .await
-            .map_err(chain_error!("chat.connect: get_access_token error"))?;
+            .map_err(chain_error("chat.connect: get_access_token error"))?;
 
         // Connect to Websocket
         let ss_id = rand::random::<u32>() % 10 + 1; // Load Balancing
         let addr = format!("wss://kr-ss{}.chat.naver.com/chat", ss_id);
         let (stream, _response) = tokio_tungstenite::connect_async(addr)
             .await
-            .map_err(chain_error!("chat.connect: websocket connect failed"))?;
+            .map_err(chain_error("chat.connect: websocket connect failed"))?;
         let (write, read) = stream.split();
 
         // Store in self
@@ -198,7 +198,7 @@ impl ChatClient {
     async fn send_message(&self, message: Message) -> Result<(), Error> {
         debug_println!("Sent {message}");
         match &mut *self.inner.write_stream.lock().await {
-            Some(s) => s.send(message).await.map_err(chain_error!("send failed")),
+            Some(s) => s.send(message).await.map_err(chain_error("send failed")),
             None => Err("Not connected".into()),
         }
     }
@@ -221,7 +221,7 @@ impl ChatClient {
             .next() // read
             .await
             .ok_or("None in event handler")? // next() returned None
-            .map_err(chain_error!("websocket disconnected")); // next() returned Err. disconnected
+            .map_err(chain_error("websocket disconnected")); // next() returned Err. disconnected
 
         if let Err(err) = message {
             client.disconnect().await;
@@ -231,12 +231,12 @@ impl ChatClient {
         let text = message
             .unwrap()
             .into_text()
-            .map_err(chain_error!("do_handle: message is not a text"))?; // message is not text
+            .map_err(chain_error("do_handle: message is not a text"))?; // message is not text
 
         debug_println!("Recieved {text}");
 
         let json = serde_json::from_str::<Value>(text.as_str())
-            .map_err(chain_error!("do_handle: message is not a json."))?;
+            .map_err(chain_error("do_handle: message is not a json."))?;
         // {
         //     json::JsonValue::Object(object) => object,
         //     not_object => Err(format!("Not an object {}", not_object))?,
@@ -253,7 +253,7 @@ impl ChatClient {
             ChatCommand::Connect => todo!(),
             ChatCommand::Connected => {
                 let body = jsonvalue_unwrap_or_return!(Value::Object, body)
-                    .map_err(chain_error!("do_handle.connected"))?;
+                    .map_err(chain_error("do_handle.connected"))?;
                 let sid = simple_get_as!(body, "sid", as_str)?;
                 *client.inner.sid.lock().await = Some(sid.into());
 
@@ -264,7 +264,7 @@ impl ChatClient {
             ChatCommand::Event => todo!(),
             ChatCommand::Chat => {
                 let chats = jsonvalue_unwrap_or_return!(Value::Array, body)
-                    .map_err(chain_error!("do_handle.chat"))?;
+                    .map_err(chain_error("do_handle.chat"))?;
                 ChatClient::handle_chat(client, chats).await?;
             }
             ChatCommand::Donation => todo!(),
@@ -282,7 +282,7 @@ impl ChatClient {
     async fn handle_chat(client: &ChatClient, chats: &[Value]) -> Result<(), Error> {
         for chat in chats {
             let chat_event = serde_json::from_value::<ChatEvent>(chat.clone())
-                .map_err(chain_error!("do_handle.chat"))?;
+                .map_err(chain_error("do_handle.chat"))?;
 
             client
                 .inner
@@ -315,7 +315,7 @@ impl ChatClient {
     async fn do_poll(client: &ChzzkClient, channel_id: &ChannelId) -> Result<ChatChannelId, Error> {
         let channel_status = client.get_channel_live_status(channel_id).await;
         Ok(channel_status
-            .map_err(chain_error!("poll: live_channel_status error"))?
+            .map_err(crate::error::chain_error("poll: live_channel_status error"))?
             .open_or("poll: not livestreaming")?
             .chat_channel_id)
     }

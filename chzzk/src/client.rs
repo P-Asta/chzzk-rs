@@ -214,19 +214,19 @@ impl ChzzkRequestBuilder {
         let response = request
             .send()
             .await
-            .map_err(chain_error!("do_request: failed to get response"))?;
+            .map_err(chain_error("do_request: failed to get response"))?;
 
         let text = response
             .text()
             .await
-            .map_err(chain_error!("do_request: response is not a text"))?;
+            .map_err(chain_error("do_request: response is not a text"))?;
 
         let json = serde_json::from_str::<T>(&text)
             // let json = json::parse(text.as_str())
-            .map_err(chain_error!(format!(
+            .map_err(chain_error(format!(
                 "do_request: response is not a json. {}",
                 text
-            )))?;
+            ).as_str()))?;
 
         Ok(json)
     }
