@@ -36,7 +36,7 @@ where
 
 pub(super) struct HandlerVec<T>(pub Vec<Box<dyn HandlerTrait<T>>>);
 
-impl<T: Clone> HandlerVec<T> {
+impl<T> HandlerVec<T> {
     pub fn new() -> Self {
         Self(Vec::new())
     }
