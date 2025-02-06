@@ -340,14 +340,14 @@ impl ChatClient {
         F: FnOnce(Arc<ChatEvent>) -> Fut + Clone + Send + Sync + 'static,
         Fut: Future<Output = ()> + Send + 'static,
     {
-        let ff = HandlerHolder { handler: f };
+        // let ff = HandlerHolder { handler: f };
         self.inner
             .event_handlers
             .write()
             .await
             .chat
             .0
-            .push(Box::new(ff))
+            .push(Box::new(f))
     }
 }
 

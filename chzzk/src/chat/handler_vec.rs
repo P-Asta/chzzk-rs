@@ -15,21 +15,17 @@ where
     }
 }
 
-pub(super) struct HandlerHolder<H> {
-    pub handler: H,
-}
-
 pub(super) trait HandlerTrait<T>: Send + Sync {
     fn call(&self, v: Arc<T>) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 }
 
-impl<H, T> HandlerTrait<T> for HandlerHolder<H>
+impl<H, T> HandlerTrait<T> for H
 where
     H: Handler<T> + Clone + Send + Sync,
     T: Send,
 {
     fn call(&self, v: Arc<T>) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        let h = self.handler.clone();
+        let h = self.clone();
         h.call(v)
     }
 }
@@ -48,3 +44,15 @@ impl<T> HandlerVec<T> {
         }
     }
 }
+
+/// Closures returning futures:
+/// They are often not Fn, neither FnMut. Because they can't reference capture 
+/// local environment, since they are async and may live longer than the 
+/// environment. All enviroments necessary should be moved.
+
+/// Calling FnOnce moves the closure, so it can't be called again. But we do
+/// not want this. So we need to clone the closure before calling it.
+
+/// But traits with Clone cannot be trait objects since it is sized. So we
+/// can't use Vec<Box<dyn Handler<T>>> directly.
+struct _X;
