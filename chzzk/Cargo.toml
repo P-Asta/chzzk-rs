@@ -7,8 +7,8 @@ authors = ["5-23 <rustacean@5-23.dev>", "Jibago <wani3327@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/P-Asta/chzzk-rs"
 description = "Unofficial SDK for the Korean video streaming platform Chzzk"
-categories = ["chzzk", "api-bindings"]
-keywords = ["chzzk"]
+categories = ["api-bindings"]
+keywords = ["chzzk", "naver"]
 
 [dependencies]
 futures = "0.3.31"
