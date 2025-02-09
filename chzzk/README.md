@@ -15,7 +15,7 @@ Made to help debug. Enabling it prints out some additional informations to `stdo
 - `event_handler caught error: wrong bdy (not an attr). Object {"cmd": Number(10000), "ver": String("2")}`\
 This is actually not an error. You can ignore it. You won't get this when `chzzk_debug` feature is disabled.
 - `ChzzkError("chat.connect: get_user_status error. maybe wrong auth information", ...)`\
-You are very likely to pass wrong or outdated authentication information to `ChzzkClient::sign_in()`.
+You are very likely passing incorrect or outdated authentication information to `ChzzkClient::sign_in()`.
 
 ## Running an example
 ```sh
