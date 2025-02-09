@@ -1,4 +1,7 @@
-use crate::{channel::{ChannelId, ChatChannelId}, debug_println};
+use crate::{
+    channel::{ChannelId, ChatChannelId},
+    debug_println,
+};
 use futures::{
     stream::{SplitSink, SplitStream, StreamExt},
     SinkExt,
@@ -81,7 +84,7 @@ impl ChatClient {
 
         // Get UID
         let user = self.client.get_user_status().await.map_err(chain_error(
-            "chat.connect: get_user_status error. maybe wrong auth information"
+            "chat.connect: get_user_status error. maybe wrong auth information",
         ))?;
 
         // Get accTkn
@@ -94,7 +97,7 @@ impl ChatClient {
         // Connect to Websocket
         let ss_id = rand::random::<u32>() % 10 + 1; // Load Balancing
         let addr = format!("wss://kr-ss{}.chat.naver.com/chat", ss_id);
-        let (stream, _response) = tokio_tungstenite::connect_async(addr)
+        let (stream, response) = tokio_tungstenite::connect_async(addr)
             .await
             .map_err(chain_error("chat.connect: websocket connect failed"))?;
         let (write, read) = stream.split();
@@ -303,7 +306,7 @@ impl ChatClient {
 
             match ChatClient::do_poll(&client.client, &client.channel_id).await {
                 Ok(chat_id) => *client.inner.chat_id.lock().await = Some(chat_id.clone()),
-                Err(_err) => {
+                Err(err) => {
                     debug_println!("poll error: {:?}", err);
                     // chat.disconnect();
                     break;

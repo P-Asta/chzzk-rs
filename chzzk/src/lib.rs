@@ -3,6 +3,7 @@ mod client;
 mod data;
 pub mod error;
 pub mod r#macro;
+mod request_builder;
 
 pub use client::ChzzkClient;
 pub use data::*;
@@ -11,12 +12,6 @@ use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::Deserialize;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub(crate) struct Response<T> {
-    pub code: usize,
-    pub message: Option<String>,
-    pub content: T,
-}
 
 /// Chzzk Datetime type in form of `YYYY-MM-DD HH:mm:ss`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -54,7 +49,7 @@ impl From<ChzzkDateTime> for SystemTime {
     }
 }
 
-#[derive(serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct ChzzkTimestamp(u64);
 
 impl From<SystemTime> for ChzzkTimestamp {

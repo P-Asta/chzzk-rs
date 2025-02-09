@@ -3,7 +3,9 @@ pub struct Error(
     pub Option<Box<dyn std::error::Error + Sync + Send>>,
 );
 
-pub fn chain_error<T: std::error::Error + Send + Sync + 'static>(message: &str) -> impl FnOnce(T) -> Error + use<'_, T> { 
+pub fn chain_error<T: std::error::Error + Send + Sync + 'static>(
+    message: &str,
+) -> impl FnOnce(T) -> Error + use<'_, T> {
     move |error| Error(message.into(), Some(Box::new(error)))
 }
 
