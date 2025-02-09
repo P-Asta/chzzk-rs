@@ -85,16 +85,10 @@ impl ChzzkClient {
         &self,
         chat_id: &ChatChannelId,
     ) -> Result<ChatAccessToken, Error> {
-        let response_object = Self::game(
-            format!(
-                "v1/chats/access-token?channelId={}&chatType=STREAMING",
-                **chat_id
-            )
-            .as_str(),
-        )
-        .get(self, vec![])
-        .send::<Response<ChatAccessToken>>()
-        .await?;
+        let response_object = Self::game("v1/chats/access-token")
+            .get(self, vec![("channelId".to_string(), (**chat_id).clone()), ("chatType".to_string(), "STREAMING".to_string())])
+            .send::<Response<ChatAccessToken>>()
+            .await?;
 
         if response_object.code == 42601 {
             return Err("Broadcast is age-restricted, nidAuth, nidSession is required".into());

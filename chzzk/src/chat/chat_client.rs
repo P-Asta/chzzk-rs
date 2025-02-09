@@ -97,14 +97,13 @@ impl ChatClient {
         // Connect to Websocket
         let ss_id = rand::random::<u32>() % 10 + 1; // Load Balancing
         let addr = format!("wss://kr-ss{}.chat.naver.com/chat", ss_id);
-        let (stream, response) = tokio_tungstenite::connect_async(addr)
+        let (stream, _response) = tokio_tungstenite::connect_async(addr)
             .await
             .map_err(chain_error("chat.connect: websocket connect failed"))?;
         let (write, read) = stream.split();
 
         // Store in self
         *self.inner.write_stream.lock().await = Some(write);
-        debug_println!("Response: {}", response.status(),);
 
         // Run handler
         tokio::spawn(ChatClient::response_handler(read, self.clone()));
@@ -207,7 +206,6 @@ impl ChatClient {
     }
 
     async fn response_handler(mut read_stream: ReadStream, mut chat: ChatClient) {
-        debug_println!("handler runs");
         while chat.inner.write_stream.lock().await.is_some() {
             if let Err(err) = ChatClient::do_handle(&mut read_stream, &mut chat).await {
                 debug_println!("event_handler caught error: {err}");
