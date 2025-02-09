@@ -3,13 +3,11 @@ pub struct Error(
     pub Option<Box<dyn std::error::Error + Sync + Send>>,
 );
 
-macro_rules! chain_error {
-    ($message:expr) => {
-        |error| Error($message.into(), Some(Box::new(error)))
-    };
+pub fn chain_error<T: std::error::Error + Send + Sync + 'static>(
+    message: &str,
+) -> impl FnOnce(T) -> Error + use<'_, T> {
+    move |error| Error(message.into(), Some(Box::new(error)))
 }
-
-pub(crate) use chain_error;
 
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -24,8 +22,6 @@ impl std::error::Error for Error {
     fn cause(&self) -> Option<&dyn std::error::Error> {
         None
     }
-
-    // fn provide<'a>(&'a self, request: &mut std::error::Request<'a>) {}
 }
 
 impl std::fmt::Display for Error {

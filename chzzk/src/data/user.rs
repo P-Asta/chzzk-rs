@@ -1,12 +1,11 @@
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub struct UserIdHash(pub String);
+use super::channel::ChannelId;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct User {
     #[serde(rename = "hasProfile")]
     pub has_profile: bool,
     #[serde(rename = "userIdHash")]
-    pub user_id_hash: UserIdHash,
+    pub user_id_hash: ChannelId,
     pub nickname: String,
     #[serde(rename = "profileImageUrl")]
     pub profile_image_url: String,

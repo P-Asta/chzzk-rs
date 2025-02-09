@@ -1,13 +1,18 @@
+use super::string_like;
 use crate::ChzzkDateTime;
+use std::ops::Deref;
+
+string_like! {ChannelId} // Hexadecimal channel id
+string_like! {ChatChannelId} // 6-letters-long chat id
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Channel {
     #[serde(rename = "channelId")]
-    pub channel_id: String,
+    pub channel_id: ChannelId,
     #[serde(rename = "channelName")]
     pub channel_name: String,
     #[serde(rename = "channelImageUrl")]
-    pub channel_image_url: String,
+    pub channel_image_url: Option<String>,
     #[serde(rename = "verifiedMark")]
     pub verified_mark: bool,
     #[serde(rename = "channelType")]
@@ -22,6 +27,10 @@ pub struct Channel {
     pub subscription_availability: bool,
     #[serde(rename = "subscriptionPaymentAvailability")]
     pub subscription_payment_availability: SubscriptionPaymentAvailability,
+    #[serde(rename = "adMonetizationAvailability")]
+    pub ad_monetization_availability: bool,
+    // #[serde(rename = "activatedChannelBadgeIds")]
+    // pub activated_channel_badge_ids: Unknown,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -74,10 +83,10 @@ pub struct ChannelLiveStatus {
     #[serde(rename = "clipActive")]
     pub clip_active: bool,
     #[serde(rename = "chatChannelId")]
-    pub chat_channel_id: String,
+    pub chat_channel_id: ChatChannelId,
     pub tags: Vec<String>,
     #[serde(rename = "categoryType")]
-    pub category_type: String,
+    pub category_type: Option<String>,
     #[serde(rename = "liveCategory")]
     pub live_category: String,
     #[serde(rename = "liveCategoryValue")]

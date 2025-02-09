@@ -1,3 +1,8 @@
+use crate::{
+    channel::{ChannelId, ChatChannelId},
+    ChzzkTimestamp,
+};
+
 macro_rules! back_to_enum {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
         $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
@@ -13,6 +18,17 @@ macro_rules! back_to_enum {
             fn try_from(v: i32) -> Result<Self, Self::Error> {
                 match v {
                     $(x if x == $name::$vname as i32 => Ok($name::$vname),)*
+                    _ => Err(()),
+                }
+            }
+        }
+
+        impl std::convert::TryFrom<i64> for $name {
+            type Error = ();
+
+            fn try_from(v: i64) -> Result<Self, Self::Error> {
+                match v {
+                    $(x if x == $name::$vname as i64 => Ok($name::$vname),)*
                     _ => Err(()),
                 }
             }
@@ -52,3 +68,26 @@ back_to_enum!(
         SystemMessage = 30,
     }
 );
+
+#[derive(serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct ChatEvent {
+    pub svcid: String,
+    #[serde(rename = "cid")]
+    pub chat_id: ChatChannelId,
+    #[serde(rename = "mbrCnt")]
+    pub mbr_cnt: i32,
+    #[serde(rename = "uid")]
+    pub user_id: ChannelId,
+    #[serde(rename = "msg")]
+    pub message: String,
+    #[serde(rename = "msgTypeCode")]
+    pub msg_type_code: i32,
+    #[serde(rename = "msgStatusType")]
+    pub msg_status_type: String,
+    pub ctime: ChzzkTimestamp,
+    pub utime: ChzzkTimestamp,
+    // #[serde(rename = "msgTid")]
+    // pub msg_tid: Unknown,
+    #[serde(rename = "msgTime")]
+    pub msg_time: ChzzkTimestamp,
+}

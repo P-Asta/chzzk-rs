@@ -1,21 +1,15 @@
 use crate::{
-    channel::{ChannelLiveStatus, ChatAccessToken},
-    error::{chain_error, Error},
-    user::User,
-    Response,
+    channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId}, error::Error, request_builder::{ChzzkRequestBuilder, Nid}, search_channel::ChannelSearchBundle, search_live::LiveSearchBundle, search_video::VideoSearchBundle, user::User, Response, SearchContent
 };
 
 #[derive(Clone)]
-struct Nid {
-    pub aut: String,
-    pub ses: String,
+pub struct ChzzkClient {
+    pub(super) nid: Option<Nid>,
+    pub(super) client: reqwest::Client,
 }
 
-#[derive(Clone)]
-pub struct ChzzkClient {
-    nid: Option<Nid>,
-    client: reqwest::Client,
-}
+#[derive(serde::Deserialize)]
+struct DropResponse {}
 
 impl ChzzkClient {
     pub fn new() -> Self {
@@ -40,54 +34,12 @@ impl ChzzkClient {
         self.nid = Some(nid);
     }
 
-    /// Send request to given URL.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if request fails, or response is not valid json.
-    async fn do_request<'a, T>(&self, full_path: String) -> Result<T, Error>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        println!("request to: {full_path}.");
-        let mut request = self.client.get(full_path);
-
-        if let Some(nid) = &self.nid {
-            request = request.header("Cookie", format!("NID_AUT={};NID_SES={}", nid.aut, nid.ses));
-        }
-
-        let response = request
-            .send()
-            .await
-            .map_err(chain_error!("do_request: failed to get response"))?;
-
-        let text = response
-            .text()
-            .await
-            .map_err(chain_error!("do_request: response is not a text"))?;
-
-        let json = serde_json::from_str::<T>(&text)
-            // let json = json::parse(text.as_str())
-            .map_err(chain_error!(
-                format!("do_request: response is not a json. {}", text)))?;
-
-        Ok(json)
+    fn chzzk(path: &str) -> ChzzkRequestBuilder {
+        ChzzkRequestBuilder::new(format!("https://api.chzzk.naver.com/{path}"))
     }
 
-    async fn request_chzzk<'a, T>(&self, path: String) -> Result<T, Error>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        self.do_request(format!("https://api.chzzk.naver.com/{path}"))
-            .await
-    }
-
-    async fn request_game<'a, T>(&self, path: String) -> Result<T, Error>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        self.do_request(format!("https://comm-api.game.naver.com/nng_main/{path}"))
-            .await
+    fn game(path: &str) -> ChzzkRequestBuilder {
+        ChzzkRequestBuilder::new(format!("https://comm-api.game.naver.com/nng_main/{path}"))
     }
 
     /// Get channel live status of channel with given id.
@@ -95,16 +47,16 @@ impl ChzzkClient {
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// This function will return an error if request fails.
     pub async fn get_channel_live_status(
         &self,
-        channel_id: &str,
+        channel_id: &ChannelId,
     ) -> Result<ChannelLiveStatus, Error> {
-        let response_object = self
-            .request_chzzk::<Response<ChannelLiveStatus>>(format!(
-                "polling/v2/channels/{channel_id}/live-status"
-            ))
-            .await?;
+        let response_object =
+            Self::chzzk(format!("polling/v2/channels/{}/live-status", **channel_id).as_str())
+                .get(self, vec![])
+                .send::<Response<ChannelLiveStatus>>()
+                .await?;
 
         Ok(response_object.content)
     }
@@ -116,10 +68,10 @@ impl ChzzkClient {
     ///
     /// This function will return an error if request fails.
     pub async fn get_user_status(&self) -> Result<User, Error> {
-        let response_object = self
-            .request_game::<Response<User>>("v1/user/getUserStatus".into())
+        let response_object = Self::game("v1/user/getUserStatus")
+            .get(self, vec![])
+            .send::<Response<User>>()
             .await?;
-
         Ok(response_object.content)
     }
 
@@ -129,11 +81,13 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_access_token(&self, chat_id: &str) -> Result<ChatAccessToken, Error> {
-        let response_object = self
-            .request_game::<Response<ChatAccessToken>>(format!(
-                "v1/chats/access-token?channelId={chat_id}&chatType=STREAMING"
-            ))
+    pub async fn get_access_token(
+        &self,
+        chat_id: &ChatChannelId,
+    ) -> Result<ChatAccessToken, Error> {
+        let response_object = Self::game("v1/chats/access-token")
+            .get(self, vec![("channelId".to_string(), (**chat_id).clone()), ("chatType".to_string(), "STREAMING".to_string())])
+            .send::<Response<ChatAccessToken>>()
             .await?;
 
         if response_object.code == 42601 {
@@ -142,6 +96,99 @@ impl ChzzkClient {
 
         Ok(response_object.content)
     }
+
+    /// Get channel information.
+    /// ex) https://api.chzzk.naver.com/service/v1/channels/9ae7d38b629b78f48e49fb3106218ff5
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if request fails.
+    pub async fn get_channel_info(&self, channel_id: &ChannelId) -> Result<Channel, Error> {
+        let response = Self::chzzk(format!("service/v1/channels/{}", **channel_id).as_str())
+            .get(self, vec![])
+            .send::<Response<Channel>>()
+            .await?;
+
+        Ok(response.content)
+    }
+
+    pub async fn set_chat_notice(
+        &self,
+        channel_id: &ChannelId,
+        chat_id: Option<&ChatChannelId>,
+        sender: &ChannelId,
+        time: u64,
+    ) -> Result<(), Error> {
+        let chat_id = match chat_id {
+            Some(x) => x,
+            None => {
+                &self
+                    .get_channel_live_status(channel_id)
+                    .await?
+                    .chat_channel_id
+            }
+        };
+
+        let payload = serde_json::json!({
+            "channelId": chat_id,
+            "chatType": "STREAMING",
+            // "extras": "{\"chatType\":\"STREAMING\",\"osType\":\"PC\",\"streamingChannelId\":\"1dac6492f81d89e261f692bb6b79ff57\",\"emojis\":{}}",
+            "message": "0",
+            "messageTime": time,
+            "messageUserIdHash": sender,
+            "streamingChannelId": channel_id,
+        });
+
+        Self::game("v1/chats/notices")
+            .post(self, Some(payload.to_string()))
+            .send::<DropResponse>()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn search_channels(
+        &self,
+        keyword: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<SearchContent<ChannelSearchBundle>, Error> {
+        let response = Self::chzzk("service/v1/search/channels")
+            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+            .send::<Response<SearchContent<ChannelSearchBundle>>>()
+            .await?;
+
+        Ok(response.content)
+    }
+
+    pub async fn search_videos(
+        &self,
+        keyword: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<SearchContent<VideoSearchBundle>, Error> {
+        let response = Self::game("service/v1/search/videos")
+            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+            .send::<Response<SearchContent<VideoSearchBundle>>>()
+            .await?;
+
+        Ok(response.content)
+    }
+
+    pub async fn search_lives(
+        &self,
+        keyword: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<SearchContent<LiveSearchBundle>, Error> {
+        let response = Self::chzzk("service/v1/search/lives")
+            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+            .send::<Response<SearchContent<LiveSearchBundle>>>()
+            .await?;
+
+        Ok(response.content)
+    }
+
+
 }
 
 impl Default for ChzzkClient {
