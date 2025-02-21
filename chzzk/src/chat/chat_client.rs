@@ -249,9 +249,9 @@ impl ChatClient {
         let body = simple_get!(json, "bdy")?;
 
         match cmd {
-            ChatCommand::Ping => todo!(),
+            ChatCommand::Ping => {},
             ChatCommand::Pong => {}
-            ChatCommand::Connect => todo!(),
+            ChatCommand::Connect => {},
             ChatCommand::Connected => {
                 let body = jsonvalue_unwrap_or_return!(Value::Object, body)
                     .map_err(chain_error("do_handle.connected"))?;
@@ -260,21 +260,21 @@ impl ChatClient {
 
                 // todo!()
             }
-            ChatCommand::RequestRecentChat => todo!(),
+            ChatCommand::RequestRecentChat => {},
             ChatCommand::RecentChat => {}
-            ChatCommand::Event => todo!(),
+            ChatCommand::Event => {},
             ChatCommand::Chat => {
                 let chats = jsonvalue_unwrap_or_return!(Value::Array, body)
                     .map_err(chain_error("do_handle.chat"))?;
                 ChatClient::handle_chat(client, chats).await?;
             }
-            ChatCommand::Donation => todo!(),
-            ChatCommand::Kick => todo!(),
-            ChatCommand::Block => todo!(),
+            ChatCommand::Donation => {},
+            ChatCommand::Kick => {},
+            ChatCommand::Block => {},
             ChatCommand::Blind => {}
-            ChatCommand::Notice => todo!(),
-            ChatCommand::Penalty => todo!(),
-            ChatCommand::SendChat => todo!(),
+            ChatCommand::Notice => {},
+            ChatCommand::Penalty => {},
+            ChatCommand::SendChat => {},
         }
 
         Ok(())
