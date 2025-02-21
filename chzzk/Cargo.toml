@@ -1,6 +1,6 @@
 [package]
 name = "chzzk"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 rust-version = "1.84"
 authors = ["5-23 <rustacean@5-23.dev>", "Jibago <wani3327@gmail.com>"]
