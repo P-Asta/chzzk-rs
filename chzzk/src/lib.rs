@@ -1,3 +1,4 @@
+#[cfg(feature = "unofficial")]
 pub mod chat;
 mod client;
 mod data;
@@ -11,7 +12,6 @@ pub use data::*;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone, Utc};
 use serde::Deserialize;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
 
 /// Chzzk Datetime type in form of `YYYY-MM-DD HH:mm:ss`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -77,13 +77,13 @@ macro_rules! debug_println {
 pub(crate) use debug_println;
 
 #[cfg(feature = "chzzk_debug")]
-macro_rules! debug_print {
+macro_rules! _debug_print {
     ($($arg:tt)*) => (print!($($arg)*));
 }
 
 #[cfg(not(feature = "chzzk_debug"))]
-macro_rules! debug_print {
+macro_rules! _debug_print {
     ($($arg:tt)*) => {};
 }
 
-pub(crate) use debug_print;
+// pub(crate) use _debug_print;

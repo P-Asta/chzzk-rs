@@ -1,4 +1,5 @@
-use super::{channel::ChannelId, SimplifiedSearchedChannel};
+use super::SimplifiedSearchedChannel;
+use crate::channel::ChannelId;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct LiveSearchBundle {

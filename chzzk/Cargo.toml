@@ -23,3 +23,4 @@ chrono = "0.4.39"
 
 [features]
 chzzk_debug = []
+unofficial = []

@@ -1,7 +1,4 @@
-use crate::{
-    channel::{ChannelId, ChatChannelId},
-    debug_println,
-};
+use crate::{channel::ChannelId, debug_println, unofficial::channel::ChatChannelId};
 use futures::{
     stream::{SplitSink, SplitStream, StreamExt},
     SinkExt,
@@ -75,7 +72,7 @@ impl ChatClient {
         // Get ChatID
         let channel_status = self
             .client
-            .get_channel_live_status(&self.channel_id)
+            .live_status(&self.channel_id)
             .await
             .map_err(chain_error("chat.connect: live_channel_status error"))?;
         let chat_id = channel_status.chat_channel_id;
@@ -83,14 +80,14 @@ impl ChatClient {
         *self.inner.chat_id.lock().await = Some(chat_id.clone());
 
         // Get UID
-        let user = self.client.get_user_status().await.map_err(chain_error(
+        let user = self.client.user_status().await.map_err(chain_error(
             "chat.connect: get_user_status error. maybe wrong auth information",
         ))?;
 
         // Get accTkn
         let chat_status = self
             .client
-            .get_access_token(&chat_id)
+            .unofficial_access_token(&chat_id)
             .await
             .map_err(chain_error("chat.connect: get_access_token error"))?;
 
@@ -249,9 +246,9 @@ impl ChatClient {
         let body = simple_get!(json, "bdy")?;
 
         match cmd {
-            ChatCommand::Ping => {},
+            ChatCommand::Ping => {}
             ChatCommand::Pong => {}
-            ChatCommand::Connect => {},
+            ChatCommand::Connect => {}
             ChatCommand::Connected => {
                 let body = jsonvalue_unwrap_or_return!(Value::Object, body)
                     .map_err(chain_error("do_handle.connected"))?;
@@ -260,21 +257,21 @@ impl ChatClient {
 
                 // todo!()
             }
-            ChatCommand::RequestRecentChat => {},
+            ChatCommand::RequestRecentChat => {}
             ChatCommand::RecentChat => {}
-            ChatCommand::Event => {},
+            ChatCommand::Event => {}
             ChatCommand::Chat => {
                 let chats = jsonvalue_unwrap_or_return!(Value::Array, body)
                     .map_err(chain_error("do_handle.chat"))?;
                 ChatClient::handle_chat(client, chats).await?;
             }
-            ChatCommand::Donation => {},
-            ChatCommand::Kick => {},
-            ChatCommand::Block => {},
+            ChatCommand::Donation => {}
+            ChatCommand::Kick => {}
+            ChatCommand::Block => {}
             ChatCommand::Blind => {}
-            ChatCommand::Notice => {},
-            ChatCommand::Penalty => {},
-            ChatCommand::SendChat => {},
+            ChatCommand::Notice => {}
+            ChatCommand::Penalty => {}
+            ChatCommand::SendChat => {}
         }
 
         Ok(())
@@ -314,7 +311,7 @@ impl ChatClient {
     }
 
     async fn do_poll(client: &ChzzkClient, channel_id: &ChannelId) -> Result<ChatChannelId, Error> {
-        let channel_status = client.get_channel_live_status(channel_id).await;
+        let channel_status = client.live_status(channel_id).await;
         Ok(channel_status
             .map_err(crate::error::chain_error("poll: live_channel_status error"))?
             .open_or("poll: not livestreaming")?

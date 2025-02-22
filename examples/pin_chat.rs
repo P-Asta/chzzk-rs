@@ -12,8 +12,8 @@ async fn main() {
         .set_chat_notice(
             &channel,
             None,
-            &client.get_user_status().await.unwrap().user_id_hash, // these two information
-            1737095673004u64,                                      // must match
+            &client.user_status().await.unwrap().user_id_hash, // these two information
+            1737095673004u64,                                  // must match
         )
         .await
         .unwrap();

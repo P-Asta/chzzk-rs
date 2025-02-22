@@ -8,7 +8,6 @@
 
 /// But traits with Clone cannot be trait objects since it is sized. So we
 /// can't use Vec<Box<dyn FnOnce<T> + Clone>> directly.
-
 use std::{future::Future, pin::Pin, sync::Arc};
 
 pub(super) trait Handler<T>: Send + Sync {

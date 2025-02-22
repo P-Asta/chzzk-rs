@@ -1,7 +1,7 @@
-use crate::{
-    channel::{ChannelId, ChatChannelId},
-    ChzzkTimestamp,
-};
+use crate::{channel::ChannelId, ChzzkTimestamp};
+
+#[cfg(feature = "unofficial")]
+use crate::unofficial::channel::ChatChannelId;
 
 macro_rules! back_to_enum {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {

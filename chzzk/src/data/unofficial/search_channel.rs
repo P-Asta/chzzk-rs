@@ -1,8 +1,8 @@
-use super::channel::ChannelId;
+use crate::channel::ChannelId;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct ChannelSearchBundle {
-    pub channel: SearchedChannel
+    pub channel: SearchedChannel,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]

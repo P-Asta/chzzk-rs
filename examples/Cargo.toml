@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-chzzk = { path = "../chzzk", features = ["chzzk_debug"] }
+chzzk = { path = "../chzzk", features = ["chzzk_debug", "unofficial"] }
 dotenvy = "0.15.7"
 tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
 

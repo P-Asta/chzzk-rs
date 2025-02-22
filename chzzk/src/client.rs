@@ -1,11 +1,30 @@
 use crate::{
-    channel::{Channel, ChannelId, ChannelLiveStatus, ChatAccessToken, ChatChannelId}, error::Error, request_builder::{ChzzkRequestBuilder, Nid}, search_channel::ChannelSearchBundle, search_live::LiveSearchBundle, search_video::VideoSearchBundle, user::User, Response, SearchContent
+    authorization::AccessTokenResponse, error::Error, request_builder::ChzzkRequestBuilder,
+    Response,
+};
+
+#[cfg(feature = "unofficial")]
+use crate::{
+    channel::ChannelId,
+    request_builder::Nid,
+    unofficial::{
+        channel::{Channel, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
+        search_channel::ChannelSearchBundle,
+        search_live::LiveSearchBundle,
+        search_video::VideoSearchBundle,
+        user::User,
+        SearchContent,
+    },
 };
 
 #[derive(Clone)]
 pub struct ChzzkClient {
+    #[cfg(feature = "unofficial")]
     pub(super) nid: Option<Nid>,
     pub(super) client: reqwest::Client,
+    pub(super) client_id: Option<String>,
+    pub(super) client_secret: Option<String>,
+    pub(super) authorization_code: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -14,18 +33,32 @@ struct DropResponse {}
 impl ChzzkClient {
     pub fn new() -> Self {
         let c = reqwest::Client::new();
-        Self {
+        #[cfg(feature = "unofficial")]
+        return Self {
             client: c,
             nid: None,
+            client_id: None,
+            client_secret: None,
+            authorization_code: None,
+        };
+
+        #[cfg(not(feature = "unofficial"))]
+        Self {
+            client: c,
+            client_id: None,
+            client_secret: None,
+            authorization_code: None,
         }
     }
 
+    #[cfg(feature = "unofficial")]
     pub fn new_with_sign_in(aut: &str, ses: &str) -> Self {
         let mut x = Self::new();
         x.sign_in(aut, ses);
         x
     }
 
+    #[cfg(feature = "unofficial")]
     pub fn sign_in(&mut self, aut: &str, ses: &str) {
         let nid = Nid {
             aut: aut.into(),
@@ -34,12 +67,22 @@ impl ChzzkClient {
         self.nid = Some(nid);
     }
 
-    fn chzzk(path: &str) -> ChzzkRequestBuilder {
-        ChzzkRequestBuilder::new(format!("https://api.chzzk.naver.com/{path}"))
-    }
+    pub async fn access_token(&self) -> Result<AccessTokenResponse, Error> {
+        let body = serde_json::json!({
+            "grantType": "authorization_code",
+            "clientId": self.client_id,
+            "clientSecret": self.client_secret,
+            "code": self.authorization_code,
+            "state": 0
+        })
+        .to_string();
 
-    fn game(path: &str) -> ChzzkRequestBuilder {
-        ChzzkRequestBuilder::new(format!("https://comm-api.game.naver.com/nng_main/{path}"))
+        let response = ChzzkRequestBuilder::open_api("auth/v1/token")
+            .post(self, Some(body))
+            .send::<Response<AccessTokenResponse>>()
+            .await?;
+
+        Ok(response.content)
     }
 
     /// Get channel live status of channel with given id.
@@ -48,15 +91,14 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_channel_live_status(
-        &self,
-        channel_id: &ChannelId,
-    ) -> Result<ChannelLiveStatus, Error> {
-        let response_object =
-            Self::chzzk(format!("polling/v2/channels/{}/live-status", **channel_id).as_str())
-                .get(self, vec![])
-                .send::<Response<ChannelLiveStatus>>()
-                .await?;
+    #[cfg(feature = "unofficial")]
+    pub async fn live_status(&self, channel_id: &ChannelId) -> Result<ChannelLiveStatus, Error> {
+        let response_object = ChzzkRequestBuilder::chzzk(
+            format!("polling/v2/channels/{}/live-status", **channel_id).as_str(),
+        )
+        .get(self, vec![])
+        .send::<Response<ChannelLiveStatus>>()
+        .await?;
 
         Ok(response_object.content)
     }
@@ -67,8 +109,9 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_user_status(&self) -> Result<User, Error> {
-        let response_object = Self::game("v1/user/getUserStatus")
+    #[cfg(feature = "unofficial")]
+    pub async fn user_status(&self) -> Result<User, Error> {
+        let response_object = ChzzkRequestBuilder::game("v1/user/getUserStatus")
             .get(self, vec![])
             .send::<Response<User>>()
             .await?;
@@ -81,12 +124,19 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_access_token(
+    #[cfg(feature = "unofficial")]
+    pub async fn unofficial_access_token(
         &self,
         chat_id: &ChatChannelId,
     ) -> Result<ChatAccessToken, Error> {
-        let response_object = Self::game("v1/chats/access-token")
-            .get(self, vec![("channelId".to_string(), (**chat_id).clone()), ("chatType".to_string(), "STREAMING".to_string())])
+        let response_object = ChzzkRequestBuilder::game("v1/chats/access-token")
+            .get(
+                self,
+                vec![
+                    ("channelId".to_string(), (**chat_id).clone()),
+                    ("chatType".to_string(), "STREAMING".to_string()),
+                ],
+            )
             .send::<Response<ChatAccessToken>>()
             .await?;
 
@@ -103,15 +153,18 @@ impl ChzzkClient {
     /// # Errors
     ///
     /// This function will return an error if request fails.
-    pub async fn get_channel_info(&self, channel_id: &ChannelId) -> Result<Channel, Error> {
-        let response = Self::chzzk(format!("service/v1/channels/{}", **channel_id).as_str())
-            .get(self, vec![])
-            .send::<Response<Channel>>()
-            .await?;
+    #[cfg(feature = "unofficial")]
+    pub async fn channel_info(&self, channel_id: &ChannelId) -> Result<Channel, Error> {
+        let response =
+            ChzzkRequestBuilder::chzzk(format!("service/v1/channels/{}", **channel_id).as_str())
+                .get(self, vec![])
+                .send::<Response<Channel>>()
+                .await?;
 
         Ok(response.content)
     }
 
+    #[cfg(feature = "unofficial")]
     pub async fn set_chat_notice(
         &self,
         channel_id: &ChannelId,
@@ -121,12 +174,7 @@ impl ChzzkClient {
     ) -> Result<(), Error> {
         let chat_id = match chat_id {
             Some(x) => x,
-            None => {
-                &self
-                    .get_channel_live_status(channel_id)
-                    .await?
-                    .chat_channel_id
-            }
+            None => &self.live_status(channel_id).await?.chat_channel_id,
         };
 
         let payload = serde_json::json!({
@@ -139,56 +187,78 @@ impl ChzzkClient {
             "streamingChannelId": channel_id,
         });
 
-        Self::game("v1/chats/notices")
+        ChzzkRequestBuilder::game("v1/chats/notices")
             .post(self, Some(payload.to_string()))
             .send::<DropResponse>()
             .await?;
         Ok(())
     }
 
+    #[cfg(feature = "unofficial")]
     pub async fn search_channels(
         &self,
         keyword: &str,
         offset: usize,
         size: usize,
     ) -> Result<SearchContent<ChannelSearchBundle>, Error> {
-        let response = Self::chzzk("service/v1/search/channels")
-            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+        let response = ChzzkRequestBuilder::chzzk("service/v1/search/channels")
+            .get(
+                self,
+                vec![
+                    ("keyword".into(), keyword.into()),
+                    ("offset".into(), offset.to_string()),
+                    ("size".into(), size.to_string()),
+                ],
+            )
             .send::<Response<SearchContent<ChannelSearchBundle>>>()
             .await?;
 
         Ok(response.content)
     }
 
+    #[cfg(feature = "unofficial")]
     pub async fn search_videos(
         &self,
         keyword: &str,
         offset: usize,
         size: usize,
     ) -> Result<SearchContent<VideoSearchBundle>, Error> {
-        let response = Self::game("service/v1/search/videos")
-            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+        let response = ChzzkRequestBuilder::game("service/v1/search/videos")
+            .get(
+                self,
+                vec![
+                    ("keyword".into(), keyword.into()),
+                    ("offset".into(), offset.to_string()),
+                    ("size".into(), size.to_string()),
+                ],
+            )
             .send::<Response<SearchContent<VideoSearchBundle>>>()
             .await?;
 
         Ok(response.content)
     }
 
+    #[cfg(feature = "unofficial")]
     pub async fn search_lives(
         &self,
         keyword: &str,
         offset: usize,
         size: usize,
     ) -> Result<SearchContent<LiveSearchBundle>, Error> {
-        let response = Self::chzzk("service/v1/search/lives")
-            .get(self, vec![("keyword".into(), keyword.into()), ("offset".into(), offset.to_string()), ("size".into(), size.to_string())])
+        let response = ChzzkRequestBuilder::chzzk("service/v1/search/lives")
+            .get(
+                self,
+                vec![
+                    ("keyword".into(), keyword.into()),
+                    ("offset".into(), offset.to_string()),
+                    ("size".into(), size.to_string()),
+                ],
+            )
             .send::<Response<SearchContent<LiveSearchBundle>>>()
             .await?;
 
         Ok(response.content)
     }
-
-
 }
 
 impl Default for ChzzkClient {

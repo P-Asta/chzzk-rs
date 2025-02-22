@@ -1,4 +1,4 @@
-use super::channel::ChannelId;
+use crate::channel::ChannelId;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct User {
