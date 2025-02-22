@@ -88,7 +88,7 @@ pub struct ChannelLiveStatus {
     #[serde(rename = "categoryType")]
     pub category_type: Option<String>,
     #[serde(rename = "liveCategory")]
-    pub live_category: String,
+    pub live_category: Option<String>,
     #[serde(rename = "liveCategoryValue")]
     pub live_category_value: String,
     // #[serde(rename = "faultStatus")]
