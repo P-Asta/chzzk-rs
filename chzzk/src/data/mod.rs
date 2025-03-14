@@ -3,7 +3,6 @@ pub mod user;
 pub mod search_channel;
 pub mod search_live;
 pub mod search_video;
-
 macro_rules! string_like {
     ($name: ident) => {
         #[derive(
@@ -50,16 +49,12 @@ pub struct SearchContent<T> {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[serde(rename_all="camelCase")]
 pub struct SimplifiedSearchedChannel {
-    #[serde(rename = "channelId")]
     pub channel_id: ChannelId,
-    #[serde(rename = "channelName")]
     pub channel_name: String,
-    #[serde(rename = "channelImageUrl")]
     pub channel_image_url: Option<String>,
-    #[serde(rename = "verifiedMark")]
     pub verified_mark: bool,
-    #[serde(rename = "activatedChannelBadgeIds")]
     pub activated_channel_badge_ids: Option<Vec<String>>,
 }
 
