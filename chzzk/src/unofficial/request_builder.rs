@@ -3,8 +3,15 @@ use reqwest::RequestBuilder;
 use crate::{
     debug_println,
     error::{chain_error, Error},
-    ChzzkClient,
+    unofficial::ChzzkClient,
 };
+
+#[cfg(feature = "unofficial")]
+#[derive(Clone)]
+pub(super) struct Nid {
+    pub aut: String,
+    pub ses: String,
+}
 
 pub(crate) struct ChzzkRequestBuilder {
     url: String,
@@ -13,6 +20,14 @@ pub(crate) struct ChzzkRequestBuilder {
 impl ChzzkRequestBuilder {
     pub fn new(url: String) -> Self {
         Self { url }
+    }
+
+    pub fn chzzk(path: &str) -> Self {
+        ChzzkRequestBuilder::new(format!("https://api.chzzk.naver.com/{path}"))
+    }
+
+    pub fn game(path: &str) -> Self {
+        ChzzkRequestBuilder::new(format!("https://comm-api.game.naver.com/nng_main/{path}"))
     }
 
     pub fn open_api(path: &str) -> Self {
@@ -30,7 +45,10 @@ impl ChzzkRequestBuilder {
         debug_println!("request to: {}.", url);
         let request = client.client.get(url);
 
-        ChzzkRequestWrapper { request }
+        return ChzzkRequestWrapper {
+            request,
+            nid: client.nid.clone(),
+        };
     }
 
     pub fn post(self, client: &ChzzkClient, body: Option<String>) -> ChzzkRequestWrapper {
@@ -42,16 +60,28 @@ impl ChzzkRequestBuilder {
             .header("Content-Type", "application/json")
             .body(body.unwrap_or_default());
 
-        ChzzkRequestWrapper { request }
+        return ChzzkRequestWrapper {
+            request,
+            nid: client.nid.clone(),
+        };
+
     }
 }
 
 pub(super) struct ChzzkRequestWrapper {
     request: RequestBuilder,
+    nid: Option<Nid>,
 }
 
 impl ChzzkRequestWrapper {
     pub async fn send<T: serde::de::DeserializeOwned>(mut self) -> Result<T, Error> {
+        #[cfg(feature = "unofficial")]
+        if let Some(nid) = self.nid {
+            self.request = self
+                .request
+                .header("Cookie", format!("NID_AUT={};NID_SES={}", nid.aut, nid.ses));
+        }
+
         let response = self
             .request
             .send()

@@ -1,9 +1,6 @@
 pub mod authorization;
 pub mod channel;
 
-#[cfg(feature = "unofficial")]
-pub mod unofficial;
-
 macro_rules! string_like {
     ($name: ident) => {
         #[derive(

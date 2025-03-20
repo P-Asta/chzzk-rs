@@ -1,5 +1,5 @@
 #[cfg(feature = "unofficial")]
-pub mod chat;
+pub mod unofficial;
 mod client;
 mod data;
 pub mod error;

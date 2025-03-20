@@ -1,6 +1,6 @@
 #[tokio::main]
 async fn main() {
-    let client = chzzk::ChzzkClient::new();
+    let client = chzzk::unofficial::ChzzkClient::new();
     let res = client.search_channels("탬탬", 0, 20).await.unwrap();
 
     for (index, channel) in res.data.iter().enumerate() {

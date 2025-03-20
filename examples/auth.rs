@@ -1,12 +1,29 @@
-/// You need to fill `.env` with your own AUT and SES values from browser cookies
-/// in order to run some examples.
-pub fn get_aut_ses_from_env() -> (String, String) {
-    if dotenvy::dotenv().is_err() {
-        // success when run in examples directory
-        dotenvy::from_path(r#"examples/.env"#).unwrap(); // success when run in chzzk-rs root
+pub struct ExampleAuthentication;
+
+impl ExampleAuthentication {
+    pub fn new() -> Self {
+        if dotenvy::dotenv().is_err() {
+            // success when run in examples directory
+            dotenvy::from_path(r#"examples/.env"#).unwrap(); // success when run in chzzk-rs root
+        }
+
+        Self
     }
-    (
-        std::env::var("CHZZK_AUT").unwrap(),
-        std::env::var("CHZZK_SES").unwrap(),
-    )
+
+    pub fn aut(&self) -> String {
+        std::env::var("CHZZK_AUT").unwrap()
+    }
+
+    pub fn ses(&self) -> String {
+        std::env::var("CHZZK_SES").unwrap()
+    }
+
+    pub fn client_id(&self) -> String {
+        std::env::var("CHZZK_CLIENT_ID").unwrap()
+    }
+    
+    pub fn client_secret(&self) -> String {
+        std::env::var("CHZZK_CLIENT_SECRET").unwrap()
+    }
 }
+

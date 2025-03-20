@@ -1,11 +1,12 @@
-use chzzk::ChzzkClient;
+use chzzk::unofficial::ChzzkClient;
+#[path ="../auth.rs"]
 mod auth;
 
 #[tokio::main]
 async fn main() {
     let mut client = ChzzkClient::new();
-    let auth = auth::get_aut_ses_from_env();
-    client.sign_in(auth.0.as_str(), auth.1.as_str());
+    let auth = auth::ExampleAuthentication::new();
+    client.sign_in(&auth.aut(), &auth.ses());
 
     let channel = "1dac6492f81d89e261f692bb6b79ff57".to_string().into();
     client

@@ -12,20 +12,20 @@ tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
 name = "connect_chat"
-path = "connect_chat.rs"
+path = "unofficial/connect_chat.rs"
 
 [[example]]
 name = "echo_bot"
-path = "echo_bot.rs"
+path = "unofficial/echo_bot.rs"
 
 [[example]]
 name = "get_channel_info"
-path = "get_channel_info.rs"
+path = "unofficial/get_channel_info.rs"
 
 [[example]]
 name = "search_channels"
-path = "search_channels.rs"
+path = "unofficial/search_channels.rs"
 
 [[example]]
 name = "pin_chat"
-path = "pin_chat.rs"
+path = "unofficial/pin_chat.rs"
