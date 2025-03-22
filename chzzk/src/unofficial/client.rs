@@ -1,13 +1,9 @@
-use std::str::FromStr;
-
-use reqwest::Url;
-
 use crate::{
     channel::ChannelId,
-    error::Error, 
+    error::Error,
     unofficial::{
-        request_builder::{ChzzkRequestBuilder, Nid},
         channel::{Channel, ChannelLiveStatus, ChatAccessToken, ChatChannelId},
+        request_builder::{ChzzkRequestBuilder, Nid},
         search_channel::ChannelSearchBundle,
         search_live::LiveSearchBundle,
         search_video::VideoSearchBundle,
@@ -20,7 +16,7 @@ use crate::{
 #[derive(Clone)]
 pub struct ChzzkClient {
     pub(crate) client: reqwest::Client,
-    pub(crate) nid: Option<Nid>,
+    pub(super) nid: Option<Nid>,
 }
 
 #[derive(serde::Deserialize)]

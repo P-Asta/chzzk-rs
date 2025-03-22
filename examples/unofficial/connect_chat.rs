@@ -1,5 +1,5 @@
 use chzzk::unofficial::{chat::ChatClient, ChzzkClient};
-#[path ="../auth.rs"]
+#[path = "../auth.rs"]
 mod auth;
 
 #[tokio::main]

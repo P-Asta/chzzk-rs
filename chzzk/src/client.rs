@@ -55,7 +55,7 @@ impl ChzzkClient {
         })
         .to_string();
 
-        let response = ChzzkRequestBuilder::open_api("auth/v1/token")
+        let response = ChzzkRequestBuilder::from_path("auth/v1/token")
             .post(self, Some(body))
             .send::<Response<AccessTokenResponse>>()
             .await?;
@@ -72,7 +72,7 @@ impl ChzzkClient {
         })
         .to_string();
 
-        ChzzkRequestBuilder::open_api("auth/v1/token/revoke")
+        ChzzkRequestBuilder::from_path("auth/v1/token/revoke")
             .post(self, Some(body))
             .send::<DropResponse>()
             .await?;
@@ -88,10 +88,18 @@ impl ChzzkClient {
         })
         .to_string();
 
-        ChzzkRequestBuilder::open_api("auth/v1/token/revoke")
+        ChzzkRequestBuilder::from_path("auth/v1/token/revoke")
             .post(self, Some(body))
             .send::<DropResponse>()
             .await?;
         Ok(())
+    }
+
+    async fn client_session_url(&self) -> Result<Url, Error> {
+        ChzzkRequestBuilder::from_path("/open/v1/sessions/auth/client")
+            .get(self, vec![])
+            .send::<Response<String>>()
+            .await
+            .map(|r| Url::from_str(r.content.as_str()).unwrap())
     }
 }

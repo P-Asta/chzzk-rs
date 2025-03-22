@@ -1,10 +1,10 @@
-#[cfg(feature = "unofficial")]
-pub mod unofficial;
 mod client;
 mod data;
 pub mod error;
 pub mod r#macro;
 mod request_builder;
+#[cfg(feature = "unofficial")]
+pub mod unofficial;
 
 pub use client::ChzzkClient;
 pub use data::*;

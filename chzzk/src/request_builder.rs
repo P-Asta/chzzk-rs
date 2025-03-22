@@ -15,7 +15,7 @@ impl ChzzkRequestBuilder {
         Self { url }
     }
 
-    pub fn open_api(path: &str) -> Self {
+    pub fn from_path(path: &str) -> Self {
         ChzzkRequestBuilder::new(format!("https://openapi.chzzk.naver.com/{path}"))
     }
 
@@ -28,7 +28,12 @@ impl ChzzkRequestBuilder {
                 .collect::<Vec<String>>()
                 .join("&");
         debug_println!("request to: {}.", url);
-        let request = client.client.get(url);
+        let request = client
+            .client
+            .get(url)
+            .header("Client-id", &client.client_id)
+            .header("Client-secret", &client.client_secret)
+            .header("Content-type", "application/json");
 
         ChzzkRequestWrapper { request }
     }
@@ -39,7 +44,9 @@ impl ChzzkRequestBuilder {
         let request = client
             .client
             .post(self.url)
-            .header("Content-Type", "application/json")
+            .header("Client-id", &client.client_id)
+            .header("Client-secret", &client.client_secret)
+            .header("Content-type", "application/json")
             .body(body.unwrap_or_default());
 
         ChzzkRequestWrapper { request }
@@ -51,7 +58,7 @@ pub(super) struct ChzzkRequestWrapper {
 }
 
 impl ChzzkRequestWrapper {
-    pub async fn send<T: serde::de::DeserializeOwned>(mut self) -> Result<T, Error> {
+    pub async fn send<T: serde::de::DeserializeOwned>(self) -> Result<T, Error> {
         let response = self
             .request
             .send()

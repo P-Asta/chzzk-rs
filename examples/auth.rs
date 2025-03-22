@@ -21,9 +21,8 @@ impl ExampleAuthentication {
     pub fn client_id(&self) -> String {
         std::env::var("CHZZK_CLIENT_ID").unwrap()
     }
-    
+
     pub fn client_secret(&self) -> String {
         std::env::var("CHZZK_CLIENT_SECRET").unwrap()
     }
 }
-

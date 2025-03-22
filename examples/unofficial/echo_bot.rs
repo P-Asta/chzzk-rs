@@ -1,6 +1,6 @@
 use chzzk::unofficial::{chat::ChatClient, ChzzkClient};
 use std::time::Duration;
-#[path ="../auth.rs"]
+#[path = "../auth.rs"]
 mod auth;
 
 #[tokio::main]

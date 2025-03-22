@@ -30,10 +30,6 @@ impl ChzzkRequestBuilder {
         ChzzkRequestBuilder::new(format!("https://comm-api.game.naver.com/nng_main/{path}"))
     }
 
-    pub fn open_api(path: &str) -> Self {
-        ChzzkRequestBuilder::new(format!("https://openapi.chzzk.naver.com/{path}"))
-    }
-
     pub fn get(self, client: &ChzzkClient, param: Vec<(String, String)>) -> ChzzkRequestWrapper {
         let url = self.url
             + "?"
@@ -64,7 +60,6 @@ impl ChzzkRequestBuilder {
             request,
             nid: client.nid.clone(),
         };
-
     }
 }
 
