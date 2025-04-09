@@ -11,17 +11,7 @@ pub struct User {
     pub profile_image_url: String,
     // pub penalties: Unknown,
     pub official_noti_agree: bool,
-    #[serde(deserialize_with = "null_to_default")]
-    pub official_noti_agree_updated_date: String,
+    pub official_noti_agree_updated_date: Option<String>,
     pub verified_mark: bool,
     pub logged_in: bool,
-}
-
-fn null_to_default<'de, D, T>(de: D) -> Result<T, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Default + Deserialize<'de>,
-{
-    let key = Option::<T>::deserialize(de)?;
-    Ok(key.unwrap_or_default())
 }
