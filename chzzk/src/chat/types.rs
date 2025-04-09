@@ -70,19 +70,17 @@ back_to_enum!(
 );
 
 #[derive(serde::Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ChatEvent {
     pub svcid: String,
     #[serde(rename = "cid")]
     pub chat_id: ChatChannelId,
-    #[serde(rename = "mbrCnt")]
     pub mbr_cnt: i32,
     #[serde(rename = "uid")]
     pub user_id: ChannelId,
     #[serde(rename = "msg")]
     pub message: String,
-    #[serde(rename = "msgTypeCode")]
     pub msg_type_code: i32,
-    #[serde(rename = "msgStatusType")]
     pub msg_status_type: String,
     pub ctime: ChzzkTimestamp,
     pub utime: ChzzkTimestamp,
